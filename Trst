@@ -15,21 +15,24 @@ const FilterMenu = ({ filters, setFilters }) => {
 
   return (
     <Menu
-      placement="bottom-start"
-      renderAnchor={({ ref, toggle }) => (
-        <IconFilter
-          filled
-          ref={ref}
-          onClick={toggle}
-          title="Filter Columns"
-          titleId="filter-icon"
-          style={{
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            padding: '6px',
-            cursor: 'pointer',
-          }}
-        />
+      label="Filter"
+      placement="bottom"
+      size="small"
+      hideCaret
+      renderAnchor={({ toggleMenu }) => (
+        <span onClick={toggleMenu}>
+          <IconFilter
+            filled
+            title="Filter Columns"
+            titleId="filter-icon"
+            style={{
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              padding: '6px',
+              cursor: 'pointer',
+            }}
+          />
+        </span>
       )}
     >
       {ALL_FIELDS.map((field) => (
