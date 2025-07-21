@@ -1,58 +1,51 @@
 import React from 'react';
-import { Menu, MenuItem } from '@americanexpress/dls-react';
-import { IconFilter } from '@americanexpress/dls-icons';
+import {
+  FilterMenu,
+  CheckboxGroup,
+  Checkbox,
+} from '@americanexpress/dls-react';
 
-const ALL_FIELDS = ['name', 'value', 'description', 'source'];
+const ALL_FIELDS = [
+  { id: 'name', label: 'Field Name' },
+  { id: 'value', label: 'Field Value' },
+  { id: 'description', label: 'Field Description' },
+  { id: 'source', label: 'System Source Name' },
+];
 
-const FilterMenu = ({ filters, setFilters }) => {
-  const toggleFilter = (field) => {
+const ColumnFilterMenu = ({ filters, setFilters, show, onClose }) => {
+  const handleToggle = (fieldId) => {
     setFilters((prev) =>
-      prev.includes(field)
-        ? prev.filter((f) => f !== field)
-        : [...prev, field]
+      prev.includes(fieldId)
+        ? prev.filter((f) => f !== fieldId)
+        : [...prev, fieldId]
     );
   };
 
   return (
-    <Menu
-      label="Filter"
-      placement="bottom"
-      size="small"
-      hideCaret
-      renderAnchor={({ toggleMenu }) => (
-        <span onClick={toggleMenu}>
-          <IconFilter
-            filled
-            title="Filter Columns"
-            titleId="filter-icon"
-            style={{
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              padding: '6px',
-              cursor: 'pointer',
-            }}
-          />
-        </span>
-      )}
+    <FilterMenu
+      id="column-filter"
+      showMenu={show}
+      onMenuClose={onClose}
+      showResetButton={false}
+      showApplyButton={false}
+      style={{ zIndex: 100 }}
     >
-      {ALL_FIELDS.map((field) => (
-        <MenuItem key={field}>
-          <label style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={filters.includes(field)}
-              onChange={() => toggleFilter(field)}
-              style={{ marginRight: '8px' }}
-            />
-            {field}
-          </label>
-        </MenuItem>
-      ))}
-    </Menu>
+      <CheckboxGroup legend="Select Columns">
+        {ALL_FIELDS.map(({ id, label }) => (
+          <Checkbox
+            key={id}
+            id={`checkbox-${id}`}
+            label={label}
+            checked={filters.includes(id)}
+            onChange={() => handleToggle(id)}
+          />
+        ))}
+      </CheckboxGroup>
+    </FilterMenu>
   );
 };
 
-export default FilterMenu;
+export default ColumnFilterMenu;
 
 import React, { useState } from 'react';
 import {
@@ -64,32 +57,34 @@ import {
   DataTableHeadCell,
   Button,
 } from '@americanexpress/dls-react';
-import { IconDownload } from '@americanexpress/dls-icons';
+import { IconDownload, IconFilter } from '@americanexpress/dls-icons';
+
 import triumphTransData from '../data/Triumph_Trans_Codes.json';
 import triumphStatusData from '../data/Triumph_Status_Codes.json';
-import FilterMenu from './FilterMenu';
+import ColumnFilterMenu from './FilterMenu';
 
 const TabbedTables = () => {
   const [activeTab, setActiveTab] = useState(null);
-  const [filters, setFilters] = useState([]);
+  const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
-  const transData = triumphTransData.Triumph_Trans_Codes.map(item => ({
+  const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
     name: item['Field Name'],
     value: item['Field Value'],
     description: item['Field Description'],
     source: item['System Source Name'],
   }));
 
-  const acctData = triumphStatusData.Triumph_Status_Codes.map(item => ({
+  const acctData = triumphStatusData.Triumph_Status_Codes.map((item) => ({
     name: item['Field Name'],
     value: item['Field Value'],
     description: item['Field Description'],
     source: item['System Source Name'],
   }));
 
-  const handleToggle = tab => {
-    setActiveTab(prev => (prev === tab ? null : tab));
-    setFilters([]); // reset filters on tab switch
+  const handleToggle = (tab) => {
+    setActiveTab((prev) => (prev === tab ? null : tab));
+    setShowFilterMenu(false); // hide filter menu on tab switch
   };
 
   const handleDownload = () => {
@@ -103,38 +98,35 @@ const TabbedTables = () => {
     document.body.removeChild(link);
   };
 
-  const handleFilterChange = fieldName => {
-    setFilters(prev =>
-      prev.includes(fieldName)
-        ? prev.filter(f => f !== fieldName)
-        : [...prev, fieldName]
-    );
-  };
-
   const getFilteredRows = () => {
     const rows = activeTab === 'trans' ? transData : acctData;
-    if (filters.length === 0) return rows;
-    return rows.filter(row => filters.includes(row.name));
+    return rows.map((row) => {
+      const filteredRow = {};
+      filters.forEach((key) => {
+        filteredRow[key] = row[key];
+      });
+      return filteredRow;
+    });
   };
 
-  const renderTable = rows => (
-    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
-      <DataTable borders="all" density="default">
+  const renderTable = (rows) => (
+    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%' }}>
+      <DataTable borders="all" density="default" tableLayout="auto">
         <DataTableHead>
           <DataTableRow>
-            <DataTableHeadCell>Field Name</DataTableHeadCell>
-            <DataTableHeadCell>Field Value</DataTableHeadCell>
-            <DataTableHeadCell>Field Description</DataTableHeadCell>
-            <DataTableHeadCell>System Source Name</DataTableHeadCell>
+            {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
+            {filters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
+            {filters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
+            {filters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
           </DataTableRow>
         </DataTableHead>
         <DataTableBody>
-          {rows.map((row, idx) => (
-            <DataTableRow key={idx}>
-              <DataTableCell>{row.name}</DataTableCell>
-              <DataTableCell>{row.value}</DataTableCell>
-              <DataTableCell>{row.description}</DataTableCell>
-              <DataTableCell>{row.source}</DataTableCell>
+          {rows.map((row, i) => (
+            <DataTableRow key={i}>
+              {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
+              {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
+              {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
+              {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
             </DataTableRow>
           ))}
         </DataTableBody>
@@ -145,43 +137,40 @@ const TabbedTables = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
-        <Button
-          variant={activeTab === 'trans' ? 'secondary' : 'primary'}
-          onClick={() => handleToggle('trans')}
-        >
+        <Button variant={activeTab === 'trans' ? 'secondary' : 'primary'} onClick={() => handleToggle('trans')}>
           Transaction Codes
         </Button>
-        <Button
-          variant={activeTab === 'acct' ? 'secondary' : 'primary'}
-          onClick={() => handleToggle('acct')}
-        >
+        <Button variant={activeTab === 'acct' ? 'secondary' : 'primary'} onClick={() => handleToggle('acct')}>
           Account Status Codes
         </Button>
       </div>
 
-      <br />
-
       {activeTab && (
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center' }}>
           <IconDownload
             filled={true}
             title="Download JSON"
             titleId="download-icon"
             onClick={handleDownload}
-            style={{ cursor: 'pointer' }}
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
           />
-          <FilterMenu
+          <IconFilter
+            filled={true}
+            title="Filter Columns"
+            titleId="filter-icon"
+            onClick={() => setShowFilterMenu((prev) => !prev)}
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+          />
+          <ColumnFilterMenu
             filters={filters}
-            onChange={handleFilterChange}
-            columns={(activeTab === 'trans' ? transData : acctData).map(row => row.name)}
+            setFilters={setFilters}
+            show={showFilterMenu}
+            onClose={() => setShowFilterMenu(false)}
           />
         </div>
       )}
 
-      <br />
-
-      {activeTab === 'trans' && renderTable(getFilteredRows())}
-      {activeTab === 'acct' && renderTable(getFilteredRows())}
+      {activeTab && renderTable(getFilteredRows())}
     </div>
   );
 };
