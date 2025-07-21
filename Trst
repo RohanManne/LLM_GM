@@ -1,62 +1,58 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { CheckboxGroup, Checkbox } from '@americanexpress/dls-react';
 
 const ALL_FIELDS = ['name', 'value', 'description', 'source'];
 
-const FilterMenu = ({ filters, setFilters, valueOptions, selectedValues, setSelectedValues }) => {
+const FilterMenu = ({ filters, setFilters, onApply, onReset }) => {
+  const [tempFilters, setTempFilters] = useState(filters);
+
+  useEffect(() => {
+    setTempFilters(filters);
+  }, [filters]);
+
   const toggleFilter = (field) => {
-    setFilters((prev) =>
+    setTempFilters((prev) =>
       prev.includes(field)
         ? prev.filter((f) => f !== field)
         : [...prev, field]
     );
   };
 
-  const handleDropdownChange = (field, value) => {
-    setSelectedValues((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleApply = () => {
+    setFilters(tempFilters);
+    onApply();
+  };
+
+  const handleReset = () => {
+    setTempFilters([]);
+    setFilters([]);
+    onReset();
   };
 
   return (
-    <div>
-      <fieldset>
-        <legend>Filter Columns</legend>
+    <>
+      <CheckboxGroup legend="Filter Columns">
         {ALL_FIELDS.map((field) => (
-          <label key={field} style={{ display: 'block', marginBottom: '6px' }}>
-            <input
-              type="checkbox"
-              checked={filters.includes(field)}
-              onChange={() => toggleFilter(field)}
-            />
-            {' '}{field}
-          </label>
+          <Checkbox
+            key={field}
+            id={field}
+            label={field}
+            checked={tempFilters.includes(field)}
+            onChange={() => toggleFilter(field)}
+          />
         ))}
-      </fieldset>
-
-      {ALL_FIELDS.map((field) => (
-        <div key={field} style={{ marginTop: '12px' }}>
-          <label htmlFor={`filter-${field}`} style={{ fontWeight: 'bold' }}>{`Filter by ${field}`}</label>
-          <br />
-          <select
-            id={`filter-${field}`}
-            value={selectedValues[field] || ''}
-            onChange={(e) => handleDropdownChange(field, e.target.value)}
-          >
-            <option value="">All</option>
-            {(valueOptions[field] || []).map((val) => (
-              <option key={val} value={val}>{val}</option>
-            ))}
-          </select>
-        </div>
-      ))}
-    </div>
+      </CheckboxGroup>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
+        <button onClick={handleReset}>Reset</button>
+        <button onClick={handleApply}>Apply</button>
+      </div>
+    </>
   );
 };
 
 export default FilterMenu;
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   DataTable, DataTableHead, DataTableBody, DataTableRow,
   DataTableCell, DataTableHeadCell, Button
@@ -70,76 +66,58 @@ import FilterMenu from './FilterMenu';
 const TabbedTables = () => {
   const [activeTab, setActiveTab] = useState(null);
   const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
-  const [selectedValues, setSelectedValues] = useState({});
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [fieldValueFilter, setFieldValueFilter] = useState({ trans: '', acct: '' });
 
   const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
-    name: item['Field Name'],
+    name: 'Transaction Codes',
     value: item['Field Value'],
     description: item['Field Description'],
     source: item['System Source Name'],
   }));
 
   const acctData = triumphStatusData.Triumph_Status_Codes.map((item) => ({
-    name: item['Field Name'],
+    name: 'Account Status Codes',
     value: item['Field Value'],
     description: item['Field Description'],
     source: item['System Source Name'],
   }));
 
-  const dataMap = {
-    trans: transData,
-    acct: acctData,
-  };
-
   const handleToggle = (tab) => {
     setActiveTab((prev) => (prev === tab ? null : tab));
     setShowDownloadMenu(false);
     setShowFilterMenu(false);
-    setSelectedValues({});
+    setFilters(['name', 'value', 'description', 'source']); // Reset filters
   };
 
   const getFilteredRows = () => {
-    const rows = dataMap[activeTab] || [];
-    return rows.filter((row) =>
-      Object.entries(selectedValues).every(([key, value]) => {
-        if (!value) return true;
-        return (row[key] || '').toLowerCase() === value.toLowerCase();
-      })
+    const rows = activeTab === 'trans' ? transData : acctData;
+    const search = fieldValueFilter[activeTab]?.toLowerCase().trim();
+    const filtered = rows.filter(row =>
+      !search || row.value.toLowerCase().includes(search)
     );
-  };
-
-  const getDropdownOptions = () => {
-    const rows = dataMap[activeTab] || [];
-    const options = { name: [], value: [], description: [], source: [] };
-    rows.forEach((row) => {
-      Object.keys(options).forEach((key) => {
-        if (row[key] && !options[key].includes(row[key])) {
-          options[key].push(row[key]);
-        }
-      });
+    return filtered.map(row => {
+      const filteredRow = {};
+      filters.forEach(f => filteredRow[f] = row[f]);
+      return filteredRow;
     });
-    return options;
   };
 
   const downloadData = (format) => {
-    const rows = getFilteredRows();
+    const data = getFilteredRows();
     let blob, filename;
 
     if (format === 'json') {
-      blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' });
+      blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      filename = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
     } else {
       const header = filters.join(',');
-      const csvRows = rows.map(row => filters.map(f => `"${row[f] || ''}"`).join(','));
+      const csvRows = data.map(row => filters.map(f => `"${row[f] ?? ''}"`).join(','));
       const csvContent = [header, ...csvRows].join('\n');
       blob = new Blob([csvContent], { type: 'text/csv' });
+      filename = activeTab === 'trans' ? 'Transaction_Codes.csv' : 'Account_Status_Codes.csv';
     }
-
-    filename =
-      activeTab === 'trans'
-        ? `Transaction_Codes.${format}`
-        : `Account_Status_Codes.${format}`;
 
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -148,33 +126,30 @@ const TabbedTables = () => {
     setShowDownloadMenu(false);
   };
 
-  const renderTable = () => {
-    const rows = getFilteredRows();
-    return (
-      <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
-        <DataTable borders="all" density="default" tableLayout="auto">
-          <DataTableHead>
-            <DataTableRow>
-              {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
-              {filters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
-              {filters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
-              {filters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
+  const renderTable = (rows) => (
+    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
+      <DataTable borders="all" density="default" tableLayout="auto">
+        <DataTableHead>
+          <DataTableRow>
+            {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
+            {filters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
+            {filters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
+            {filters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
+          </DataTableRow>
+        </DataTableHead>
+        <DataTableBody>
+          {rows.map((row, i) => (
+            <DataTableRow key={i}>
+              {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
+              {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
+              {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
+              {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
             </DataTableRow>
-          </DataTableHead>
-          <DataTableBody>
-            {rows.map((row, i) => (
-              <DataTableRow key={i}>
-                {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
-                {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
-                {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
-                {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
-              </DataTableRow>
-            ))}
-          </DataTableBody>
-        </DataTable>
-      </div>
-    );
-  };
+          ))}
+        </DataTableBody>
+      </DataTable>
+    </div>
+  );
 
   return (
     <div>
@@ -188,52 +163,87 @@ const TabbedTables = () => {
       </div>
 
       {activeTab && (
-        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
-          <IconDownload
-            filled={true}
-            title="Download"
-            onClick={() => {
-              setShowDownloadMenu((prev) => !prev);
-              setShowFilterMenu(false);
-            }}
-            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
-          />
-          <IconFilter
-            filled={true}
-            title="Filter"
-            onClick={() => {
-              setShowFilterMenu((prev) => !prev);
-              setShowDownloadMenu(false);
-            }}
-            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
-          />
-          {showDownloadMenu && (
-            <div style={{
-              position: 'absolute', top: '36px', left: '0', background: 'white',
-              border: '1px solid #ccc', borderRadius: '4px', zIndex: 10, padding: '8px'
-            }}>
-              <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('json')}>Download JSON</div>
-              <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('csv')}>Download CSV</div>
-            </div>
-          )}
-          {showFilterMenu && (
-            <div style={{
-              position: 'absolute', top: '36px', left: '50px', background: 'white',
-              border: '1px solid #ccc', borderRadius: '4px', zIndex: 10, padding: '12px'
-            }}>
-              <FilterMenu
-                filters={filters}
-                setFilters={setFilters}
-                valueOptions={getDropdownOptions()}
-                selectedValues={selectedValues}
-                setSelectedValues={setSelectedValues}
-              />
-            </div>
-          )}
-        </div>
-      )}
+        <>
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <input
+              type="text"
+              placeholder="Filter Field Value..."
+              value={fieldValueFilter[activeTab]}
+              onChange={(e) =>
+                setFieldValueFilter((prev) => ({ ...prev, [activeTab]: e.target.value }))
+              }
+              style={{
+                padding: '8px',
+                width: '250px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </div>
 
-      {activeTab && renderTable()}
+          <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
+            <IconDownload
+              filled={true}
+              title="Download"
+              onClick={() => {
+                setShowDownloadMenu((prev) => !prev);
+                setShowFilterMenu(false);
+              }}
+              style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+            />
+
+            <IconFilter
+              filled={true}
+              title="Filter"
+              onClick={() => {
+                setShowFilterMenu((prev) => !prev);
+                setShowDownloadMenu(false);
+              }}
+              style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+            />
+
+            {showDownloadMenu && (
+              <div style={{
+                position: 'absolute',
+                top: '36px',
+                left: '0',
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                zIndex: 10,
+                padding: '8px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('json')}>Download JSON</div>
+                <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('csv')}>Download CSV</div>
+              </div>
+            )}
+
+            {showFilterMenu && (
+              <div style={{
+                position: 'absolute',
+                top: '36px',
+                left: '50px',
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                zIndex: 10,
+                padding: '12px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+              }}>
+                <FilterMenu
+                  filters={filters}
+                  setFilters={setFilters}
+                  onApply={() => setShowFilterMenu(false)}
+                  onReset={() => setShowFilterMenu(false)}
+                />
+              </div>
+            )}
+          </div>
+
+          {renderTable(getFilteredRows())}
+        </>
+      )}
     </div>
   );
 };
