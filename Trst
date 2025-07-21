@@ -20,13 +20,13 @@ const FilterMenu = ({ filters, setFilters, onApply, onReset }) => {
 
   const handleApply = () => {
     setFilters(tempFilters);
-    onApply();
+    onApply?.();
   };
 
   const handleReset = () => {
     setTempFilters([]);
     setFilters([]);
-    onReset();
+    onReset?.();
   };
 
   return (
@@ -52,7 +52,7 @@ const FilterMenu = ({ filters, setFilters, onApply, onReset }) => {
 
 export default FilterMenu;
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   DataTable, DataTableHead, DataTableBody, DataTableRow,
   DataTableCell, DataTableHeadCell, Button
@@ -68,17 +68,16 @@ const TabbedTables = () => {
   const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
-  const [fieldValueFilter, setFieldValueFilter] = useState({ trans: '', acct: '' });
 
   const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
-    name: 'Transaction Codes',
+    name: item['Field Name'],
     value: item['Field Value'],
     description: item['Field Description'],
     source: item['System Source Name'],
   }));
 
   const acctData = triumphStatusData.Triumph_Status_Codes.map((item) => ({
-    name: 'Account Status Codes',
+    name: item['Field Name'],
     value: item['Field Value'],
     description: item['Field Description'],
     source: item['System Source Name'],
@@ -88,18 +87,17 @@ const TabbedTables = () => {
     setActiveTab((prev) => (prev === tab ? null : tab));
     setShowDownloadMenu(false);
     setShowFilterMenu(false);
-    setFilters(['name', 'value', 'description', 'source']); // Reset filters
+    setFilters(['name', 'value', 'description', 'source']); // reset filters
   };
 
   const getFilteredRows = () => {
     const rows = activeTab === 'trans' ? transData : acctData;
-    const search = fieldValueFilter[activeTab]?.toLowerCase().trim();
-    const filtered = rows.filter(row =>
-      !search || row.value.toLowerCase().includes(search)
-    );
-    return filtered.map(row => {
+    if (filters.length === 0) return rows;
+    return rows.map((row) => {
       const filteredRow = {};
-      filters.forEach(f => filteredRow[f] = row[f]);
+      filters.forEach((key) => {
+        filteredRow[key] = row[key];
+      });
       return filteredRow;
     });
   };
@@ -163,87 +161,68 @@ const TabbedTables = () => {
       </div>
 
       {activeTab && (
-        <>
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <input
-              type="text"
-              placeholder="Filter Field Value..."
-              value={fieldValueFilter[activeTab]}
-              onChange={(e) =>
-                setFieldValueFilter((prev) => ({ ...prev, [activeTab]: e.target.value }))
-              }
-              style={{
-                padding: '8px',
-                width: '250px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </div>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
+          <IconDownload
+            filled={true}
+            title="Download"
+            onClick={() => {
+              setShowDownloadMenu((prev) => !prev);
+              setShowFilterMenu(false);
+            }}
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+          />
+          <IconFilter
+            filled={true}
+            title="Filter"
+            onClick={() => {
+              setShowFilterMenu((prev) => !prev);
+              setShowDownloadMenu(false);
+            }}
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+          />
 
-          <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
-            <IconDownload
-              filled={true}
-              title="Download"
-              onClick={() => {
-                setShowDownloadMenu((prev) => !prev);
-                setShowFilterMenu(false);
-              }}
-              style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
-            />
+          {showDownloadMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '36px',
+              left: '0',
+              background: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              zIndex: 10,
+              padding: '8px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('json')}>Download JSON</div>
+              <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('csv')}>Download CSV</div>
+            </div>
+          )}
 
-            <IconFilter
-              filled={true}
-              title="Filter"
-              onClick={() => {
-                setShowFilterMenu((prev) => !prev);
-                setShowDownloadMenu(false);
-              }}
-              style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
-            />
-
-            {showDownloadMenu && (
-              <div style={{
-                position: 'absolute',
-                top: '36px',
-                left: '0',
-                background: 'white',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                zIndex: 10,
-                padding: '8px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('json')}>Download JSON</div>
-                <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('csv')}>Download CSV</div>
-              </div>
-            )}
-
-            {showFilterMenu && (
-              <div style={{
-                position: 'absolute',
-                top: '36px',
-                left: '50px',
-                background: 'white',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                zIndex: 10,
-                padding: '12px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-              }}>
-                <FilterMenu
-                  filters={filters}
-                  setFilters={setFilters}
-                  onApply={() => setShowFilterMenu(false)}
-                  onReset={() => setShowFilterMenu(false)}
-                />
-              </div>
-            )}
-          </div>
-
-          {renderTable(getFilteredRows())}
-        </>
+          {showFilterMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '36px',
+              left: '50px',
+              background: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              zIndex: 10,
+              padding: '12px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+            }}>
+              <FilterMenu
+                filters={filters}
+                setFilters={setFilters}
+                onApply={() => setShowFilterMenu(false)}
+                onReset={() => setShowFilterMenu(false)}
+              />
+            </div>
+          )}
+        </div>
       )}
+
+      {activeTab === 'trans' && renderTable(getFilteredRows())}
+      {activeTab === 'acct' && renderTable(getFilteredRows())}
     </div>
   );
 };
