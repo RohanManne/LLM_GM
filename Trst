@@ -3,17 +3,17 @@ import { Menu, MenuItem } from '@americanexpress/dls-react';
 
 const ALL_FIELDS = ['name', 'value', 'description', 'source'];
 
-const FilteredMenu = ({ filters, setFilters }) => {
+const FilterMenu = ({ filters, setFilters }) => {
   const toggleFilter = (field) => {
-    if (filters.includes(field)) {
-      setFilters(filters.filter((f) => f !== field));
-    } else {
-      setFilters([...filters, field]);
-    }
+    setFilters((prev) =>
+      prev.includes(field)
+        ? prev.filter((f) => f !== field)
+        : [...prev, field]
+    );
   };
 
   return (
-    <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
+    <div style={{ display: 'inline-block' }}>
       <Menu label="Filter Columns">
         {ALL_FIELDS.map((field) => (
           <MenuItem key={field}>
@@ -33,96 +33,127 @@ const FilteredMenu = ({ filters, setFilters }) => {
   );
 };
 
-export default FilteredMenu;
+export default FilterMenu;
 
 import React, { useState, useMemo } from 'react';
-import FilteredMenu from './FilteredMenu';
+import {
+  DataTable,
+  DataTableHead,
+  DataTableBody,
+  DataTableRow,
+  DataTableCell,
+  DataTableHeadCell,
+  Button,
+} from '@americanexpress/dls-react';
 
-const TABS = ['Trans Code', 'Account Status Code', 'Fact Code'];
+import { IconDownload, IconFilter } from '@americanexpress/dls-icons';
 
-const sampleData = [
-  {
-    name: 'EXAMPLE',
-    value: '001',
-    description: 'Sample description',
-    source: 'Source A',
-  },
-  // Add more rows here
-];
+import triumphTransData from '../data/Triumph_Trans_Codes.json';
+import triumphStatusData from '../data/Triumph_Status_Codes.json';
+import FilterMenu from './FilterMenu';
 
 const TabbedTables = () => {
-  const [activeTab, setActiveTab] = useState('Trans Code');
+  const [activeTab, setActiveTab] = useState(null);
   const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
 
-  const filteredData = useMemo(() => {
-    return sampleData.map((row) => {
+  const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
+    name: item['Field Name'],
+    value: item['Field Value'],
+    description: item['Field Description'],
+    source: item['System Source Name'],
+  }));
+
+  const acctData = triumphStatusData.Triumph_Status_Codes.map((item) => ({
+    name: item['Field Name'],
+    value: item['Field Value'],
+    description: item['Field Description'],
+    source: item['System Source Name'],
+  }));
+
+  const handleToggle = (tab) => {
+    setActiveTab((prev) => (prev === tab ? null : tab));
+  };
+
+  const handleDownload = () => {
+    const data = activeTab === 'trans' ? transData : acctData;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getFilteredRows = () => {
+    const rows = activeTab === 'trans' ? transData : acctData;
+    if (filters.length === 0) return rows;
+    return rows.map((row) => {
       const filteredRow = {};
       filters.forEach((key) => {
         filteredRow[key] = row[key];
       });
       return filteredRow;
     });
-  }, [filters]);
+  };
+
+  const renderTable = (rows) => (
+    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
+      <DataTable borders="all" density="default" id="datatable" tableLayout="auto" zebraStripes="none">
+        <DataTableHead>
+          <DataTableRow>
+            {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
+            {filters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
+            {filters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
+            {filters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
+          </DataTableRow>
+        </DataTableHead>
+        <DataTableBody>
+          {rows.map((row, i) => (
+            <DataTableRow key={i}>
+              {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
+              {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
+              {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
+              {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
+            </DataTableRow>
+          ))}
+        </DataTableBody>
+      </DataTable>
+    </div>
+  );
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <div style={{ marginBottom: '1rem' }}>
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              marginRight: '8px',
-              padding: '6px 12px',
-              backgroundColor: activeTab === tab ? '#0070f3' : '#eee',
-              color: activeTab === tab ? '#fff' : '#000',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
+        <Button variant={activeTab === 'trans' ? 'secondary' : 'primary'} onClick={() => handleToggle('trans')}>
+          Transaction Codes
+        </Button>
+        <Button variant={activeTab === 'acct' ? 'secondary' : 'primary'} onClick={() => handleToggle('acct')}>
+          Account Status Codes
+        </Button>
       </div>
 
-      <FilteredMenu filters={filters} setFilters={setFilters} />
+      {activeTab && (
+        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center' }}>
+          <IconDownload
+            filled={true}
+            title="Download JSON"
+            titleId="download-icon"
+            onClick={handleDownload}
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+          />
+          <IconFilter
+            filled={true}
+            title="Filter"
+            titleId="filter-icon"
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px' }}
+          />
+          <FilterMenu filters={filters} setFilters={setFilters} />
+        </div>
+      )}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            {filters.map((key) => (
-              <th
-                key={key}
-                style={{
-                  borderBottom: '1px solid #ccc',
-                  textAlign: 'left',
-                  padding: '8px',
-                }}
-              >
-                {key.toUpperCase()}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {filteredData.map((row, idx) => (
-            <tr key={idx}>
-              {filters.map((key) => (
-                <td
-                  key={key}
-                  style={{
-                    borderBottom: '1px solid #eee',
-                    padding: '8px',
-                  }}
-                >
-                  {row[key]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {activeTab === 'trans' && renderTable(getFilteredRows())}
+      {activeTab === 'acct' && renderTable(getFilteredRows())}
     </div>
   );
 };
