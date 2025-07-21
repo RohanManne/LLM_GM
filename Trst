@@ -1,29 +1,55 @@
-import React from 'react';
-import { CheckboxGroup, Checkbox } from '@americanexpress/dls-react';
+import React, { useState, useEffect } from 'react';
+import {
+  CheckboxGroup,
+  Checkbox,
+  Button
+} from '@americanexpress/dls-react';
 
 const ALL_FIELDS = ['name', 'value', 'description', 'source'];
 
-const FilterMenu = ({ filters, setFilters }) => {
-  const toggleFilter = (field) => {
-    setFilters((prev) =>
+const FilterMenu = ({ filters, setFilters, onClose }) => {
+  const [tempFilters, setTempFilters] = useState(filters);
+
+  useEffect(() => {
+    setTempFilters(filters);
+  }, [filters]);
+
+  const toggleTempFilter = (field) => {
+    setTempFilters((prev) =>
       prev.includes(field)
         ? prev.filter((f) => f !== field)
         : [...prev, field]
     );
   };
 
+  const handleApply = () => {
+    setFilters(tempFilters);
+    onClose();
+  };
+
+  const handleReset = () => {
+    setTempFilters([]);
+  };
+
   return (
-    <CheckboxGroup legend="Filter Columns">
-      {ALL_FIELDS.map((field) => (
-        <Checkbox
-          key={field}
-          id={field}
-          label={field}
-          checked={filters.includes(field)}
-          onChange={() => toggleFilter(field)}
-        />
-      ))}
-    </CheckboxGroup>
+    <div>
+      <CheckboxGroup legend="Filter Columns">
+        {ALL_FIELDS.map((field) => (
+          <Checkbox
+            key={field}
+            id={field}
+            label={field}
+            checked={tempFilters.includes(field)}
+            onChange={() => toggleTempFilter(field)}
+          />
+        ))}
+      </CheckboxGroup>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
+        <Button variant="text" onClick={handleReset}>Reset</Button>
+        <Button variant="primary" onClick={handleApply}>Apply</Button>
+      </div>
+    </div>
   );
 };
 
@@ -45,7 +71,6 @@ const TabbedTables = () => {
   const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
-  const downloadMenuRef = useRef();
 
   const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
     name: item['Field Name'],
@@ -65,6 +90,7 @@ const TabbedTables = () => {
     setActiveTab((prev) => (prev === tab ? null : tab));
     setShowDownloadMenu(false);
     setShowFilterMenu(false);
+    setFilters(['name', 'value', 'description', 'source']); // Reset filters on tab change
   };
 
   const getFilteredRows = () => {
@@ -188,14 +214,13 @@ const TabbedTables = () => {
               padding: '12px',
               boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
             }}>
-              <FilterMenu filters={filters} setFilters={setFilters} />
+              <FilterMenu filters={filters} setFilters={setFilters} onClose={() => setShowFilterMenu(false)} />
             </div>
           )}
         </div>
       )}
 
-      {activeTab === 'trans' && renderTable(getFilteredRows())}
-      {activeTab === 'acct' && renderTable(getFilteredRows())}
+      {activeTab && renderTable(getFilteredRows())}
     </div>
   );
 };
