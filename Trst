@@ -1,0 +1,162 @@
+import React, { useState } from 'react';
+import { Menu, MenuItem } from '@americanexpress/dls-react';
+
+const FilterMenu = ({ onChange }) => {
+  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState(null);
+  const [selected, setSelected] = useState([]);
+
+  const handleToggle = (e) => {
+    setAnchor(e.currentTarget);
+    setOpen((prev) => !prev);
+  };
+
+  const handleSelect = (field) => {
+    const isSelected = selected.includes(field);
+    const newSelected = isSelected
+      ? selected.filter((f) => f !== field)
+      : [...selected, field];
+
+    setSelected(newSelected);
+    onChange(field);
+  };
+
+  return (
+    <div>
+      <button onClick={handleToggle}>Filter</button>
+      {open && (
+        <Menu anchorEl={anchor} onClose={() => setOpen(false)}>
+          {['name', 'value', 'description', 'source'].map((field) => (
+            <MenuItem key={field} onClick={() => handleSelect(field)}>
+              <input
+                type="checkbox"
+                checked={selected.includes(field)}
+                readOnly
+                style={{ marginRight: '8px' }}
+              />
+              {field}
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+    </div>
+  );
+};
+
+export default FilterMenu;
+
+import React, { useState } from 'react';
+import {
+  DataTable,
+  DataTableHead,
+  DataTableBody,
+  DataTableRow,
+  DataTableCell,
+  DataTableHeadCell,
+  Button,
+  MenuItem,
+  Menu
+} from '@americanexpress/dls-react';
+import { IconDownload, IconFilter } from '@americanexpress/dls-icons';
+import triumphTransData from '../data/Triumph_Trans_Codes.json';
+import triumphStatusData from '../data/Triumph_Status_Codes.json';
+import FilterMenu from './FilterMenu';
+
+const TabbedTables = () => {
+  const [activeTab, setActiveTab] = useState(null);
+  const [filters, setFilters] = useState([]);
+
+  const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
+    name: item['Field Name'],
+    value: item['Field Value'],
+    description: item['Field Description'],
+    source: item['System Source Name'],
+  }));
+
+  const acctData = triumphStatusData.Triumph_Status_Codes.map((item) => ({
+    name: item['Field Name'],
+    value: item['Field Value'],
+    description: item['Field Description'],
+    source: item['System Source Name'],
+  }));
+
+  const handleToggle = (tab) => {
+    setActiveTab((prev) => (prev === tab ? null : tab));
+    setFilters([]); // reset filters when switching tab
+  };
+
+  const handleDownload = () => {
+    const data = activeTab === 'trans' ? transData : acctData;
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json',
+    });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFilterChange = (fieldName) => {
+    setFilters((prev) =>
+      prev.includes(fieldName)
+        ? prev.filter((f) => f !== fieldName)
+        : [...prev, fieldName]
+    );
+  };
+
+  const getFilteredRows = () => {
+    const rows = activeTab === 'trans' ? transData : acctData;
+    if (filters.length === 0) return rows;
+    return rows.filter((row) => filters.includes('name') && row.name); // add more conditions if needed
+  };
+
+  const renderTable = (rows) => (
+    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
+      <DataTable borders="all" density="default" id="dataTable" tableLayout="auto" zebraStripes="none">
+        <DataTableHead>
+          <DataTableRow>
+            <DataTableHeadCell>Field Name</DataTableHeadCell>
+            <DataTableHeadCell>Field Value</DataTableHeadCell>
+            <DataTableHeadCell>Field Description</DataTableHeadCell>
+            <DataTableHeadCell>System Source Name</DataTableHeadCell>
+          </DataTableRow>
+        </DataTableHead>
+        <DataTableBody>
+          {rows.map((row) => (
+            <DataTableRow key={row.name}>
+              <DataTableCell>{row.name}</DataTableCell>
+              <DataTableCell>{row.value}</DataTableCell>
+              <DataTableCell>{row.description}</DataTableCell>
+              <DataTableCell>{row.source}</DataTableCell>
+            </DataTableRow>
+          ))}
+        </DataTableBody>
+      </DataTable>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
+        <Button variant={activeTab === 'trans' ? 'secondary' : 'primary'} onClick={() => handleToggle('trans')}>Transaction Codes</Button>
+        <Button variant={activeTab === 'acct' ? 'secondary' : 'primary'} onClick={() => handleToggle('acct')}>Account Status Codes</Button>
+      </div>
+
+      {activeTab && (
+        <div style={{ display: 'flex', gap: '12px', padding: '20px 10%' }}>
+          <IconDownload filled={true} title="Download JSON" titleId="download-icon" onClick={handleDownload} style={{ border: '1px solid #CCC', borderRadius: '4px', padding: '4px', cursor: 'pointer' }} />
+          <IconFilter filled={true} title="Filter Data" titleId="example-icon-id" />
+          <FilterMenu onChange={handleFilterChange} />
+        </div>
+      )}
+
+      {activeTab === 'trans' && renderTable(getFilteredRows())}
+      {activeTab === 'acct' && renderTable(getFilteredRows())}
+    </div>
+  );
+};
+
+export default TabbedTables;
+
