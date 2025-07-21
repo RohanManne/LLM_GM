@@ -55,9 +55,7 @@ const ColumnFilterMenu = ({ filters, setFilters }) => {
 
 export default ColumnFilterMenu;
 
-// src/components/TabbedTables.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   DataTable,
   DataTableHead,
@@ -65,18 +63,22 @@ import {
   DataTableRow,
   DataTableCell,
   DataTableHeadCell,
-  Button,
+  FilterMenu,
+  Dropdown,
+  DropdownItem,
+  IconButton,
 } from '@americanexpress/dls-react';
-
-import { IconDownload } from '@americanexpress/dls-icons';
+import { IconDownload, IconFilter } from '@americanexpress/dls-icons';
 
 import triumphTransData from '../data/Triumph_Trans_Codes.json';
 import triumphStatusData from '../data/Triumph_Status_Codes.json';
-import ColumnFilterMenu from './FilterMenu';
+
+const ALL_FIELDS = ['name', 'value', 'description', 'source'];
 
 const TabbedTables = () => {
   const [activeTab, setActiveTab] = useState(null);
-  const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
+  const [filters, setFilters] = useState(ALL_FIELDS);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
     name: item['Field Name'],
@@ -96,19 +98,9 @@ const TabbedTables = () => {
     setActiveTab((prev) => (prev === tab ? null : tab));
   };
 
-  const handleDownload = () => {
-    const data = activeTab === 'trans' ? transData : acctData;
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const getFilteredRows = () => {
     const rows = activeTab === 'trans' ? transData : acctData;
+    if (filters.length === 0) return rows;
     return rows.map((row) => {
       const filteredRow = {};
       filters.forEach((key) => {
@@ -118,9 +110,33 @@ const TabbedTables = () => {
     });
   };
 
+  const handleDownload = (format) => {
+    const data = activeTab === 'trans' ? transData : acctData;
+    let content;
+    let filename;
+
+    if (format === 'json') {
+      content = JSON.stringify(data, null, 2);
+      filename = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
+    } else {
+      const headers = Object.keys(data[0]).join(',');
+      const rows = data.map((obj) => Object.values(obj).map((val) => `"${val}"`).join(',')).join('\n');
+      content = `${headers}\n${rows}`;
+      filename = activeTab === 'trans' ? 'Transaction_Codes.csv' : 'Account_Status_Codes.csv';
+    }
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const renderTable = (rows) => (
     <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
-      <DataTable borders="all" density="default" id="datatable" tableLayout="auto" zebraStripes="none">
+      <DataTable borders="all" density="default" tableLayout="auto">
         <DataTableHead>
           <DataTableRow>
             {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
@@ -146,29 +162,54 @@ const TabbedTables = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
-        <Button variant={activeTab === 'trans' ? 'secondary' : 'primary'} onClick={() => handleToggle('trans')}>
+        <button onClick={() => handleToggle('trans')} className={`dls-button ${activeTab === 'trans' ? 'dls-button--secondary' : 'dls-button--primary'}`}>
           Transaction Codes
-        </Button>
-        <Button variant={activeTab === 'acct' ? 'secondary' : 'primary'} onClick={() => handleToggle('acct')}>
+        </button>
+        <button onClick={() => handleToggle('acct')} className={`dls-button ${activeTab === 'acct' ? 'dls-button--secondary' : 'dls-button--primary'}`}>
           Account Status Codes
-        </Button>
+        </button>
       </div>
 
       {activeTab && (
-        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center' }}>
-          <IconDownload
-            filled={true}
-            title="Download JSON"
-            titleId="download-icon"
-            onClick={handleDownload}
-            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
-          />
-          <ColumnFilterMenu filters={filters} setFilters={setFilters} />
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '20px' }}>
+          <Dropdown label={<IconDownload filled title="Download Options" />} variant="inline">
+            <DropdownItem onClick={() => handleDownload('json')}>Download JSON</DropdownItem>
+            <DropdownItem onClick={() => handleDownload('csv')}>Download CSV</DropdownItem>
+          </Dropdown>
+
+          <FilterMenu
+            id="filter"
+            filtersAppliedCount={filters.length}
+            showMenu={showFilterMenu}
+            onFilterButtonClick={() => setShowFilterMenu((prev) => !prev)}
+            onMenuClose={() => setShowFilterMenu(false)}
+            showResetButton
+            showApplyButton
+            onApplyButtonClick={() => setShowFilterMenu(false)}
+            onResetButtonClick={() => setFilters([])}
+          >
+            <div style={{ padding: '12px' }}>
+              {ALL_FIELDS.map((field) => (
+                <label key={field} style={{ display: 'block', marginBottom: '6px' }}>
+                  <input
+                    type="checkbox"
+                    checked={filters.includes(field)}
+                    onChange={() =>
+                      setFilters((prev) =>
+                        prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
+                      )
+                    }
+                    style={{ marginRight: '8px' }}
+                  />
+                  {field}
+                </label>
+              ))}
+            </div>
+          </FilterMenu>
         </div>
       )}
 
-      {activeTab === 'trans' && renderTable(getFilteredRows())}
-      {activeTab === 'acct' && renderTable(getFilteredRows())}
+      {activeTab && renderTable(getFilteredRows())}
     </div>
   );
 };
