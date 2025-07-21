@@ -1,26 +1,48 @@
 import React from 'react';
 import { Menu, MenuItem } from '@americanexpress/dls-react';
+import { IconFilter } from '@americanexpress/dls-icons';
 
-const FilterMenu = ({ filters, onChange, columns }) => {
+const ALL_FIELDS = ['name', 'value', 'description', 'source'];
+
+const FilterMenu = ({ filters, setFilters }) => {
+  const toggleFilter = (field) => {
+    setFilters((prev) =>
+      prev.includes(field)
+        ? prev.filter((f) => f !== field)
+        : [...prev, field]
+    );
+  };
+
   return (
     <Menu
-      placement="bottom-end"
-      trigger={({ openMenu }) => (
-        <div onClick={openMenu} style={{ cursor: 'pointer' }}>
-          {/* This renders just the icon */}
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 6h18v2H3V6zm4 5h10v2H7v-2zm-2 5h14v2H5v-2z" />
-          </svg>
-        </div>
+      placement="bottom-start"
+      renderAnchor={({ ref, toggle }) => (
+        <IconFilter
+          filled
+          ref={ref}
+          onClick={toggle}
+          title="Filter Columns"
+          titleId="filter-icon"
+          style={{
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            padding: '6px',
+            cursor: 'pointer',
+          }}
+        />
       )}
     >
-      {columns.map(col => (
-        <MenuItem
-          key={col}
-          isSelected={filters.includes(col)}
-          onClick={() => onChange(col)}
-        >
-          {col}
+      {ALL_FIELDS.map((field) => (
+        <MenuItem key={field}>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
+            <input
+              type="checkbox"
+              checked={filters.includes(field)}
+              onChange={() => toggleFilter(field)}
+              style={{ marginRight: '8px' }}
+            />
+            {field}
+          </label>
         </MenuItem>
       ))}
     </Menu>
