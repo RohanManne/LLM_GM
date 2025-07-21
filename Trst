@@ -1,84 +1,51 @@
-// src/components/FilterMenu.jsx
-
 import React from 'react';
-import {
-  FilterMenu,
-  CheckboxGroup,
-  Checkbox,
-} from '@americanexpress/dls-react';
+import { CheckboxGroup, Checkbox } from '@americanexpress/dls-react';
 
-const ALL_FIELDS = [
-  { id: 'name', label: 'Field Name' },
-  { id: 'value', label: 'Field Value' },
-  { id: 'description', label: 'Field Description' },
-  { id: 'source', label: 'System Source Name' },
-];
+const ALL_FIELDS = ['name', 'value', 'description', 'source'];
 
-const ColumnFilterMenu = ({ filters, setFilters }) => {
-  const handleToggle = (fieldId) => {
+const FilterMenu = ({ filters, setFilters }) => {
+  const toggleFilter = (field) => {
     setFilters((prev) =>
-      prev.includes(fieldId)
-        ? prev.filter((f) => f !== fieldId)
-        : [...prev, fieldId]
+      prev.includes(field)
+        ? prev.filter((f) => f !== field)
+        : [...prev, field]
     );
   };
 
   return (
-    <FilterMenu
-      id="column-filter"
-      showResetButton={false}
-      showApplyButton={false}
-      iconButtonProps={{
-        'aria-label': 'Toggle Column Filter',
-        style: {
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          padding: '6px',
-        },
-        filled: true,
-      }}
-    >
-      <CheckboxGroup legend="Select Columns">
-        {ALL_FIELDS.map(({ id, label }) => (
-          <Checkbox
-            key={id}
-            id={`checkbox-${id}`}
-            label={label}
-            checked={filters.includes(id)}
-            onChange={() => handleToggle(id)}
-          />
-        ))}
-      </CheckboxGroup>
-    </FilterMenu>
+    <CheckboxGroup legend="Filter Columns">
+      {ALL_FIELDS.map((field) => (
+        <Checkbox
+          key={field}
+          id={field}
+          label={field}
+          checked={filters.includes(field)}
+          onChange={() => toggleFilter(field)}
+        />
+      ))}
+    </CheckboxGroup>
   );
 };
 
-export default ColumnFilterMenu;
+export default FilterMenu;
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  DataTable,
-  DataTableHead,
-  DataTableBody,
-  DataTableRow,
-  DataTableCell,
-  DataTableHeadCell,
-  FilterMenu,
-  Dropdown,
-  DropdownItem,
-  IconButton,
+  DataTable, DataTableHead, DataTableBody, DataTableRow,
+  DataTableCell, DataTableHeadCell, Button
 } from '@americanexpress/dls-react';
 import { IconDownload, IconFilter } from '@americanexpress/dls-icons';
 
 import triumphTransData from '../data/Triumph_Trans_Codes.json';
 import triumphStatusData from '../data/Triumph_Status_Codes.json';
-
-const ALL_FIELDS = ['name', 'value', 'description', 'source'];
+import FilterMenu from './FilterMenu';
 
 const TabbedTables = () => {
   const [activeTab, setActiveTab] = useState(null);
-  const [filters, setFilters] = useState(ALL_FIELDS);
+  const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadMenuRef = useRef();
 
   const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
     name: item['Field Name'],
@@ -96,6 +63,8 @@ const TabbedTables = () => {
 
   const handleToggle = (tab) => {
     setActiveTab((prev) => (prev === tab ? null : tab));
+    setShowDownloadMenu(false);
+    setShowFilterMenu(false);
   };
 
   const getFilteredRows = () => {
@@ -110,28 +79,26 @@ const TabbedTables = () => {
     });
   };
 
-  const handleDownload = (format) => {
-    const data = activeTab === 'trans' ? transData : acctData;
-    let content;
-    let filename;
+  const downloadData = (format) => {
+    const data = getFilteredRows();
+    let blob, filename;
 
     if (format === 'json') {
-      content = JSON.stringify(data, null, 2);
+      blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       filename = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
     } else {
-      const headers = Object.keys(data[0]).join(',');
-      const rows = data.map((obj) => Object.values(obj).map((val) => `"${val}"`).join(',')).join('\n');
-      content = `${headers}\n${rows}`;
+      const header = filters.join(',');
+      const csvRows = data.map(row => filters.map(f => `"${row[f] ?? ''}"`).join(','));
+      const csvContent = [header, ...csvRows].join('\n');
+      blob = new Blob([csvContent], { type: 'text/csv' });
       filename = activeTab === 'trans' ? 'Transaction_Codes.csv' : 'Account_Status_Codes.csv';
     }
 
-    const blob = new Blob([content], { type: 'text/plain' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = filename;
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    setShowDownloadMenu(false);
   };
 
   const renderTable = (rows) => (
@@ -162,54 +129,73 @@ const TabbedTables = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
-        <button onClick={() => handleToggle('trans')} className={`dls-button ${activeTab === 'trans' ? 'dls-button--secondary' : 'dls-button--primary'}`}>
+        <Button variant={activeTab === 'trans' ? 'secondary' : 'primary'} onClick={() => handleToggle('trans')}>
           Transaction Codes
-        </button>
-        <button onClick={() => handleToggle('acct')} className={`dls-button ${activeTab === 'acct' ? 'dls-button--secondary' : 'dls-button--primary'}`}>
+        </Button>
+        <Button variant={activeTab === 'acct' ? 'secondary' : 'primary'} onClick={() => handleToggle('acct')}>
           Account Status Codes
-        </button>
+        </Button>
       </div>
 
       {activeTab && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '20px' }}>
-          <Dropdown label={<IconDownload filled title="Download Options" />} variant="inline">
-            <DropdownItem onClick={() => handleDownload('json')}>Download JSON</DropdownItem>
-            <DropdownItem onClick={() => handleDownload('csv')}>Download CSV</DropdownItem>
-          </Dropdown>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
+          <IconDownload
+            filled={true}
+            title="Download"
+            onClick={() => {
+              setShowDownloadMenu((prev) => !prev);
+              setShowFilterMenu(false);
+            }}
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+          />
 
-          <FilterMenu
-            id="filter"
-            filtersAppliedCount={filters.length}
-            showMenu={showFilterMenu}
-            onFilterButtonClick={() => setShowFilterMenu((prev) => !prev)}
-            onMenuClose={() => setShowFilterMenu(false)}
-            showResetButton
-            showApplyButton
-            onApplyButtonClick={() => setShowFilterMenu(false)}
-            onResetButtonClick={() => setFilters([])}
-          >
-            <div style={{ padding: '12px' }}>
-              {ALL_FIELDS.map((field) => (
-                <label key={field} style={{ display: 'block', marginBottom: '6px' }}>
-                  <input
-                    type="checkbox"
-                    checked={filters.includes(field)}
-                    onChange={() =>
-                      setFilters((prev) =>
-                        prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
-                      )
-                    }
-                    style={{ marginRight: '8px' }}
-                  />
-                  {field}
-                </label>
-              ))}
+          <IconFilter
+            filled={true}
+            title="Filter"
+            onClick={() => {
+              setShowFilterMenu((prev) => !prev);
+              setShowDownloadMenu(false);
+            }}
+            style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
+          />
+
+          {showDownloadMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '36px',
+              left: '0',
+              background: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              zIndex: 10,
+              padding: '8px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('json')}>Download JSON</div>
+              <div style={{ padding: '6px', cursor: 'pointer' }} onClick={() => downloadData('csv')}>Download CSV</div>
             </div>
-          </FilterMenu>
+          )}
+
+          {showFilterMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '36px',
+              left: '50px',
+              background: 'white',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              zIndex: 10,
+              padding: '12px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+            }}>
+              <FilterMenu filters={filters} setFilters={setFilters} />
+            </div>
+          )}
         </div>
       )}
 
-      {activeTab && renderTable(getFilteredRows())}
+      {activeTab === 'trans' && renderTable(getFilteredRows())}
+      {activeTab === 'acct' && renderTable(getFilteredRows())}
     </div>
   );
 };
