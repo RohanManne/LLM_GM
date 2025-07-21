@@ -12,9 +12,7 @@ const FilterMenu = ({ filters, setFilters, onApply, onReset }) => {
 
   const toggleFilter = (field) => {
     setTempFilters((prev) =>
-      prev.includes(field)
-        ? prev.filter((f) => f !== field)
-        : [...prev, field]
+      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
     );
   };
 
@@ -65,63 +63,67 @@ import FilterMenu from './FilterMenu';
 
 const TabbedTables = () => {
   const [activeTab, setActiveTab] = useState(null);
-  const [filters, setFilters] = useState({
-    trans: ['name', 'value', 'description', 'source'],
-    acct: ['name', 'value', 'description', 'source'],
-  });
+  const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
-  const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
-    name: item['Field Name'],
-    value: item['Field Value'],
-    description: item['Field Description'],
-    source: item['System Source Name'],
-  }));
-
-  const acctData = triumphStatusData.Triumph_Status_Codes.map((item) => ({
-    name: item['Field Name'],
-    value: item['Field Value'],
-    description: item['Field Description'],
-    source: item['System Source Name'],
-  }));
+  const [fieldFilters, setFieldFilters] = useState({
+    trans: { name: '', value: '', description: '', source: '' },
+    acct: { name: '', value: '', description: '', source: '' },
+  });
 
   const handleToggle = (tab) => {
-    setActiveTab((prev) => (prev === tab ? null : tab));
+    setActiveTab(tab);
     setShowDownloadMenu(false);
     setShowFilterMenu(false);
   };
 
-  const getFilteredRows = () => {
-    const data = activeTab === 'trans' ? transData : acctData;
-    const activeFilters = filters[activeTab] || [];
-    if (activeFilters.length === 0) return data;
+  const handleFieldFilterChange = (fieldKey, value) => {
+    setFieldFilters((prev) => ({
+      ...prev,
+      [activeTab]: { ...prev[activeTab], [fieldKey]: value }
+    }));
+  };
 
-    return data.map((row) => {
-      const filteredRow = {};
-      activeFilters.forEach((key) => {
-        filteredRow[key] = row[key];
-      });
-      return filteredRow;
-    });
+  const dataMap = {
+    trans: triumphTransData.Triumph_Trans_Codes,
+    acct: triumphStatusData.Triumph_Status_Codes,
+  };
+
+  const getFilteredRows = () => {
+    const rawData = dataMap[activeTab].map((item) => ({
+      name: item['Field Name'],
+      value: item['Field Value'],
+      description: item['Field Description'],
+      source: item['System Source Name'],
+    }));
+
+    const activeFilters = fieldFilters[activeTab];
+    return rawData.filter(row =>
+      Object.entries(activeFilters).every(([key, val]) =>
+        row[key]?.toLowerCase().includes(val.toLowerCase())
+      )
+    );
   };
 
   const downloadData = (format) => {
-    const data = getFilteredRows();
-    const activeFilters = filters[activeTab];
-    let blob, filename;
+    const data = getFilteredRows().map(row =>
+      filters.reduce((acc, key) => {
+        acc[key] = row[key];
+        return acc;
+      }, {})
+    );
 
+    let blob, filename;
     if (format === 'json') {
       blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      filename = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
+      filename = `${activeTab === 'trans' ? 'Transaction' : 'Account'}_Codes.json`;
     } else {
-      const header = activeFilters.join(',');
-      const csvRows = data.map(row =>
-        activeFilters.map(f => `"${row[f] ?? ''}"`).join(',')
-      );
+      const header = filters.join(',');
+      const csvRows = data.map(row => filters.map(f => `"${row[f] ?? ''}"`).join(','));
       const csvContent = [header, ...csvRows].join('\n');
       blob = new Blob([csvContent], { type: 'text/csv' });
-      filename = activeTab === 'trans' ? 'Transaction_Codes.csv' : 'Account_Status_Codes.csv';
+      filename = `${activeTab === 'trans' ? 'Transaction' : 'Account'}_Codes.csv`;
     }
 
     const link = document.createElement('a');
@@ -131,37 +133,54 @@ const TabbedTables = () => {
     setShowDownloadMenu(false);
   };
 
-  const renderTable = (rows) => {
-    const activeFilters = filters[activeTab] || [];
+  const renderInputFilters = () => (
+    <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+      {['name', 'value', 'description', 'source'].map((key) => (
+        <input
+          key={key}
+          type="text"
+          placeholder={`Filter ${key}...`}
+          value={fieldFilters[activeTab][key]}
+          onChange={(e) => handleFieldFilterChange(key, e.target.value)}
+          style={{
+            padding: '8px',
+            width: '200px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+          }}
+        />
+      ))}
+    </div>
+  );
 
-    return (
-      <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
-        <DataTable borders="all" density="default" tableLayout="auto">
-          <DataTableHead>
-            <DataTableRow>
-              {activeFilters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
-              {activeFilters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
-              {activeFilters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
-              {activeFilters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
+  const renderTable = (rows) => (
+    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%' }}>
+      <DataTable borders="all" density="default" tableLayout="auto">
+        <DataTableHead>
+          <DataTableRow>
+            {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
+            {filters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
+            {filters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
+            {filters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
+          </DataTableRow>
+        </DataTableHead>
+        <DataTableBody>
+          {rows.map((row, i) => (
+            <DataTableRow key={i}>
+              {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
+              {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
+              {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
+              {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
             </DataTableRow>
-          </DataTableHead>
-          <DataTableBody>
-            {rows.map((row, i) => (
-              <DataTableRow key={i}>
-                {activeFilters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
-                {activeFilters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
-                {activeFilters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
-                {activeFilters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
-              </DataTableRow>
-            ))}
-          </DataTableBody>
-        </DataTable>
-      </div>
-    );
-  };
+          ))}
+        </DataTableBody>
+      </DataTable>
+    </div>
+  );
 
   return (
     <div>
+      {/* Tab Buttons */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
         <Button variant={activeTab === 'trans' ? 'secondary' : 'primary'} onClick={() => handleToggle('trans')}>
           Transaction Codes
@@ -171,22 +190,26 @@ const TabbedTables = () => {
         </Button>
       </div>
 
+      {/* Column Input Filters */}
+      {activeTab && renderInputFilters()}
+
+      {/* Icons */}
       {activeTab && (
         <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
           <IconDownload
-            filled
+            filled={true}
             title="Download"
             onClick={() => {
-              setShowDownloadMenu(prev => !prev);
+              setShowDownloadMenu((prev) => !prev);
               setShowFilterMenu(false);
             }}
             style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
           />
           <IconFilter
-            filled
+            filled={true}
             title="Filter"
             onClick={() => {
-              setShowFilterMenu(prev => !prev);
+              setShowFilterMenu((prev) => !prev);
               setShowDownloadMenu(false);
             }}
             style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
@@ -222,10 +245,8 @@ const TabbedTables = () => {
               boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
             }}>
               <FilterMenu
-                filters={filters[activeTab]}
-                setFilters={(newFilters) =>
-                  setFilters(prev => ({ ...prev, [activeTab]: newFilters }))
-                }
+                filters={filters}
+                setFilters={setFilters}
                 onApply={() => setShowFilterMenu(false)}
                 onReset={() => setShowFilterMenu(false)}
               />
@@ -234,8 +255,8 @@ const TabbedTables = () => {
         </div>
       )}
 
-      {activeTab === 'trans' && renderTable(getFilteredRows())}
-      {activeTab === 'acct' && renderTable(getFilteredRows())}
+      {/* Table */}
+      {activeTab && renderTable(getFilteredRows())}
     </div>
   );
 };
