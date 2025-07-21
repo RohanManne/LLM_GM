@@ -20,13 +20,13 @@ const FilterMenu = ({ filters, setFilters, onApply, onReset }) => {
 
   const handleApply = () => {
     setFilters(tempFilters);
-    onApply?.();
+    onApply();
   };
 
   const handleReset = () => {
     setTempFilters([]);
     setFilters([]);
-    onReset?.();
+    onReset();
   };
 
   return (
@@ -52,7 +52,7 @@ const FilterMenu = ({ filters, setFilters, onApply, onReset }) => {
 
 export default FilterMenu;
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   DataTable, DataTableHead, DataTableBody, DataTableRow,
   DataTableCell, DataTableHeadCell, Button
@@ -65,7 +65,10 @@ import FilterMenu from './FilterMenu';
 
 const TabbedTables = () => {
   const [activeTab, setActiveTab] = useState(null);
-  const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
+  const [filters, setFilters] = useState({
+    trans: ['name', 'value', 'description', 'source'],
+    acct: ['name', 'value', 'description', 'source'],
+  });
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
@@ -87,15 +90,16 @@ const TabbedTables = () => {
     setActiveTab((prev) => (prev === tab ? null : tab));
     setShowDownloadMenu(false);
     setShowFilterMenu(false);
-    setFilters(['name', 'value', 'description', 'source']); // reset filters
   };
 
   const getFilteredRows = () => {
-    const rows = activeTab === 'trans' ? transData : acctData;
-    if (filters.length === 0) return rows;
-    return rows.map((row) => {
+    const data = activeTab === 'trans' ? transData : acctData;
+    const activeFilters = filters[activeTab] || [];
+    if (activeFilters.length === 0) return data;
+
+    return data.map((row) => {
       const filteredRow = {};
-      filters.forEach((key) => {
+      activeFilters.forEach((key) => {
         filteredRow[key] = row[key];
       });
       return filteredRow;
@@ -104,14 +108,17 @@ const TabbedTables = () => {
 
   const downloadData = (format) => {
     const data = getFilteredRows();
+    const activeFilters = filters[activeTab];
     let blob, filename;
 
     if (format === 'json') {
       blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       filename = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
     } else {
-      const header = filters.join(',');
-      const csvRows = data.map(row => filters.map(f => `"${row[f] ?? ''}"`).join(','));
+      const header = activeFilters.join(',');
+      const csvRows = data.map(row =>
+        activeFilters.map(f => `"${row[f] ?? ''}"`).join(',')
+      );
       const csvContent = [header, ...csvRows].join('\n');
       blob = new Blob([csvContent], { type: 'text/csv' });
       filename = activeTab === 'trans' ? 'Transaction_Codes.csv' : 'Account_Status_Codes.csv';
@@ -124,30 +131,34 @@ const TabbedTables = () => {
     setShowDownloadMenu(false);
   };
 
-  const renderTable = (rows) => (
-    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
-      <DataTable borders="all" density="default" tableLayout="auto">
-        <DataTableHead>
-          <DataTableRow>
-            {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
-            {filters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
-            {filters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
-            {filters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
-          </DataTableRow>
-        </DataTableHead>
-        <DataTableBody>
-          {rows.map((row, i) => (
-            <DataTableRow key={i}>
-              {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
-              {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
-              {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
-              {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
+  const renderTable = (rows) => {
+    const activeFilters = filters[activeTab] || [];
+
+    return (
+      <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
+        <DataTable borders="all" density="default" tableLayout="auto">
+          <DataTableHead>
+            <DataTableRow>
+              {activeFilters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
+              {activeFilters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
+              {activeFilters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
+              {activeFilters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
             </DataTableRow>
-          ))}
-        </DataTableBody>
-      </DataTable>
-    </div>
-  );
+          </DataTableHead>
+          <DataTableBody>
+            {rows.map((row, i) => (
+              <DataTableRow key={i}>
+                {activeFilters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
+                {activeFilters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
+                {activeFilters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
+                {activeFilters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -163,19 +174,19 @@ const TabbedTables = () => {
       {activeTab && (
         <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
           <IconDownload
-            filled={true}
+            filled
             title="Download"
             onClick={() => {
-              setShowDownloadMenu((prev) => !prev);
+              setShowDownloadMenu(prev => !prev);
               setShowFilterMenu(false);
             }}
             style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
           />
           <IconFilter
-            filled={true}
+            filled
             title="Filter"
             onClick={() => {
-              setShowFilterMenu((prev) => !prev);
+              setShowFilterMenu(prev => !prev);
               setShowDownloadMenu(false);
             }}
             style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
@@ -211,8 +222,10 @@ const TabbedTables = () => {
               boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
             }}>
               <FilterMenu
-                filters={filters}
-                setFilters={setFilters}
+                filters={filters[activeTab]}
+                setFilters={(newFilters) =>
+                  setFilters(prev => ({ ...prev, [activeTab]: newFilters }))
+                }
                 onApply={() => setShowFilterMenu(false)}
                 onReset={() => setShowFilterMenu(false)}
               />
