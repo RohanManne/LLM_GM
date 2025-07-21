@@ -1,3 +1,5 @@
+// src/components/FilterMenu.jsx
+
 import React from 'react';
 import {
   FilterMenu,
@@ -12,7 +14,7 @@ const ALL_FIELDS = [
   { id: 'source', label: 'System Source Name' },
 ];
 
-const ColumnFilterMenu = ({ filters, setFilters, show, onClose }) => {
+const ColumnFilterMenu = ({ filters, setFilters }) => {
   const handleToggle = (fieldId) => {
     setFilters((prev) =>
       prev.includes(fieldId)
@@ -24,12 +26,10 @@ const ColumnFilterMenu = ({ filters, setFilters, show, onClose }) => {
   return (
     <FilterMenu
       id="column-filter"
-      showMenu={show}
-      onMenuClose={onClose}
       showResetButton={false}
       showApplyButton={false}
       iconButtonProps={{
-        'aria-label': 'Toggle Filter',
+        'aria-label': 'Toggle Column Filter',
         style: {
           border: '1px solid #ccc',
           borderRadius: '4px',
@@ -55,6 +55,8 @@ const ColumnFilterMenu = ({ filters, setFilters, show, onClose }) => {
 
 export default ColumnFilterMenu;
 
+// src/components/TabbedTables.jsx
+
 import React, { useState } from 'react';
 import {
   DataTable,
@@ -65,6 +67,7 @@ import {
   DataTableHeadCell,
   Button,
 } from '@americanexpress/dls-react';
+
 import { IconDownload } from '@americanexpress/dls-icons';
 
 import triumphTransData from '../data/Triumph_Trans_Codes.json';
@@ -74,7 +77,6 @@ import ColumnFilterMenu from './FilterMenu';
 const TabbedTables = () => {
   const [activeTab, setActiveTab] = useState(null);
   const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
     name: item['Field Name'],
@@ -92,7 +94,6 @@ const TabbedTables = () => {
 
   const handleToggle = (tab) => {
     setActiveTab((prev) => (prev === tab ? null : tab));
-    setShowFilterMenu(false); // hide filter menu on tab switch
   };
 
   const handleDownload = () => {
@@ -118,8 +119,8 @@ const TabbedTables = () => {
   };
 
   const renderTable = (rows) => (
-    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%' }}>
-      <DataTable borders="all" density="default" tableLayout="auto">
+    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
+      <DataTable borders="all" density="default" id="datatable" tableLayout="auto" zebraStripes="none">
         <DataTableHead>
           <DataTableRow>
             {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
@@ -162,16 +163,12 @@ const TabbedTables = () => {
             onClick={handleDownload}
             style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '6px', cursor: 'pointer' }}
           />
-          <ColumnFilterMenu
-            filters={filters}
-            setFilters={setFilters}
-            show={showFilterMenu}
-            onClose={() => setShowFilterMenu(false)}
-          />
+          <ColumnFilterMenu filters={filters} setFilters={setFilters} />
         </div>
       )}
 
-      {activeTab && renderTable(getFilteredRows())}
+      {activeTab === 'trans' && renderTable(getFilteredRows())}
+      {activeTab === 'acct' && renderTable(getFilteredRows())}
     </div>
   );
 };
