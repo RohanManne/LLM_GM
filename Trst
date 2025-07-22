@@ -135,32 +135,52 @@ const TabbedTables = () => {
     link.download = filename;
     link.click();
     setShowDownloadMenu(false);
-  };
+	};
 
-  const renderTable = (rows) => (
-    <div style={{ maxHeight: '50vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
-      <DataTable borders="all" density="default" tableLayout="auto">
-        <DataTableHead>
-          <DataTableRow>
-            {filters.includes('name') && <DataTableHeadCell>Field Name</DataTableHeadCell>}
-            {filters.includes('value') && <DataTableHeadCell>Field Value</DataTableHeadCell>}
-            {filters.includes('description') && <DataTableHeadCell>Field Description</DataTableHeadCell>}
-            {filters.includes('source') && <DataTableHeadCell>System Source Name</DataTableHeadCell>}
+	const renderTable = (rows) => (
+  <div style={{ maxHeight: '60vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
+    <DataTable borders="all" density="default" tableLayout="auto">
+      <DataTableHead>
+        <DataTableRow>
+          {filters.includes('name') && (
+            <DataTableHeadCell>
+              Field Name
+              {renderInputWithSuggestions('name', 'Filter...')}
+            </DataTableHeadCell>
+          )}
+          {filters.includes('value') && (
+            <DataTableHeadCell>
+              Field Value
+              {renderInputWithSuggestions('value', 'Filter...')}
+            </DataTableHeadCell>
+          )}
+          {filters.includes('description') && (
+            <DataTableHeadCell>
+              Field Description
+              {renderInputWithSuggestions('description', 'Filter...')}
+            </DataTableHeadCell>
+          )}
+          {filters.includes('source') && (
+            <DataTableHeadCell>
+              System Source Name
+              {renderInputWithSuggestions('source', 'Filter...')}
+            </DataTableHeadCell>
+          )}
+        </DataTableRow>
+      </DataTableHead>
+      <DataTableBody>
+        {rows.map((row, i) => (
+          <DataTableRow key={i}>
+            {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
+            {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
+            {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
+            {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
           </DataTableRow>
-        </DataTableHead>
-        <DataTableBody>
-          {rows.map((row, i) => (
-            <DataTableRow key={i}>
-              {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
-              {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
-              {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
-              {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
-            </DataTableRow>
-          ))}
-        </DataTableBody>
-      </DataTable>
-    </div>
-  );
+        ))}
+      </DataTableBody>
+    </DataTable>
+  </div>
+);
 
   return (
     <div>
