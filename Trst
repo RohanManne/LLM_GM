@@ -1,3 +1,16 @@
+git commit -am "feat: add column-specific filters, autocomplete suggestions, export functionality, and UI refinements
+
+- Implemented individual input filters for Field Name, Field Value, Field Description, and System Source Name
+- Added autocomplete suggestion dropdowns under each input field
+- Enabled column visibility toggling via FilterMenu with Apply and Reset options
+- Made JSON/CSV download respect current filters and visible columns
+- Rendered filter input row directly beneath table headers for better UX alignment
+- Styled input boxes to stretch full width of table cells with transparent background and only bottom borders
+- Fixed various rendering and interaction bugs with filters and downloads
+- Updated FilterMenu to reflect column visibility and persist across tabs
+- Added README with npm setup instructions
+"
+
 import React, { useState } from 'react';
 import {
   DataTable, DataTableHead, DataTableBody, DataTableRow,
