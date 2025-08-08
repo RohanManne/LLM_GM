@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import transactionData from './Triumph_Trans_Codes.json';
 
 const TransactionCodes = () => {
@@ -12,6 +12,18 @@ const TransactionCodes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
+  // State for managing dropdowns
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [dropdownSuggestions, setDropdownSuggestions] = useState({
+    name: [],
+    value: [],
+    description: [],
+    source: []
+  });
+
+  // Refs for click outside detection
+  const dropdownRefs = useRef({});
+
   // Memoize the transformed data to avoid recreation on every render
   const transData = useMemo(() => 
     transactionData.Triumph_Trans_Codes.map((item) => ({
@@ -21,6 +33,14 @@ const TransactionCodes = () => {
       source: item['System Source Name'] || '',
     })), []
   );
+
+  // Get unique values for each field for suggestions
+  const uniqueValues = useMemo(() => ({
+    name: [...new Set(transData.map(item => item.name))].filter(Boolean).sort(),
+    value: [...new Set(transData.map(item => item.value))].filter(Boolean).sort(),
+    description: [...new Set(transData.map(item => item.description))].filter(Boolean).sort(),
+    source: [...new Set(transData.map(item => item.source))].filter(Boolean).sort(),
+  }), [transData]);
 
   // Memoize filtered data with trimmed filter values
   const filteredData = useMemo(() => 
@@ -76,7 +96,56 @@ const TransactionCodes = () => {
     setInputValues((prev) => ({ ...prev, [field]: value }));
     // Debounce the actual filter update
     debouncedSetFilters(field, value);
+    
+    // Update dropdown suggestions
+    if (value.trim()) {
+      const suggestions = uniqueValues[field].filter(item =>
+        item.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 10); // Limit to 10 suggestions
+      
+      setDropdownSuggestions(prev => ({
+        ...prev,
+        [field]: suggestions
+      }));
+      setActiveDropdown(field);
+    } else {
+      setActiveDropdown(null);
+    }
   };
+
+  const handleSuggestionClick = (field, value) => {
+    setInputValues((prev) => ({ ...prev, [field]: value }));
+    setFilters((prev) => ({ ...prev, [field]: value }));
+    setActiveDropdown(null);
+  };
+
+  const handleInputFocus = (field) => {
+    if (inputValues[field].trim()) {
+      const suggestions = uniqueValues[field].filter(item =>
+        item.toLowerCase().includes(inputValues[field].toLowerCase())
+      ).slice(0, 10);
+      
+      setDropdownSuggestions(prev => ({
+        ...prev,
+        [field]: suggestions
+      }));
+      setActiveDropdown(field);
+    }
+  };
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeDropdown && dropdownRefs.current[activeDropdown]) {
+        if (!dropdownRefs.current[activeDropdown].contains(event.target)) {
+          setActiveDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -131,46 +200,108 @@ const TransactionCodes = () => {
           {/* Filter Input Row */}
           <tr className="filter-row">
             <td>
-              <input
-                type="text"
-                className="form-control filter-input"
-                value={inputValues.name}
-                onChange={(e) => handleFilterChange('name', e.target.value)}
-                placeholder="Filter Name"
-                aria-label="Filter by Field Name"
-              />
+              <div className="input-wrapper" ref={el => dropdownRefs.current.name = el}>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.name}
+                  onChange={(e) => handleFilterChange('name', e.target.value)}
+                  onFocus={() => handleInputFocus('name')}
+                  placeholder="Filter Name"
+                  aria-label="Filter by Field Name"
+                />
+                {activeDropdown === 'name' && dropdownSuggestions.name.length > 0 && (
+                  <div className="dropdown-suggestions">
+                    {dropdownSuggestions.name.map((suggestion, idx) => (
+                      <div
+                        key={idx}
+                        className="suggestion-item"
+                        onClick={() => handleSuggestionClick('name', suggestion)}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </td>
             <td>
-              <input
-                type="text"
-                className="form-control filter-input"
-                value={inputValues.value}
-                onChange={(e) => handleFilterChange('value', e.target.value)}
-                placeholder="Filter Value"
-                aria-label="Filter by Field Value"
-              />
+              <div className="input-wrapper" ref={el => dropdownRefs.current.value = el}>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.value}
+                  onChange={(e) => handleFilterChange('value', e.target.value)}
+                  onFocus={() => handleInputFocus('value')}
+                  placeholder="Filter Value"
+                  aria-label="Filter by Field Value"
+                />
+                {activeDropdown === 'value' && dropdownSuggestions.value.length > 0 && (
+                  <div className="dropdown-suggestions">
+                    {dropdownSuggestions.value.map((suggestion, idx) => (
+                      <div
+                        key={idx}
+                        className="suggestion-item"
+                        onClick={() => handleSuggestionClick('value', suggestion)}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </td>
             <td>
-              <input
-                type="text"
-                className="form-control filter-input"
-                value={inputValues.description}
-                onChange={(e) =>
-                  handleFilterChange('description', e.target.value)
-                }
-                placeholder="Filter Description"
-                aria-label="Filter by Field Description"
-              />
+              <div className="input-wrapper" ref={el => dropdownRefs.current.description = el}>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.description}
+                  onChange={(e) => handleFilterChange('description', e.target.value)}
+                  onFocus={() => handleInputFocus('description')}
+                  placeholder="Filter Description"
+                  aria-label="Filter by Field Description"
+                />
+                {activeDropdown === 'description' && dropdownSuggestions.description.length > 0 && (
+                  <div className="dropdown-suggestions">
+                    {dropdownSuggestions.description.map((suggestion, idx) => (
+                      <div
+                        key={idx}
+                        className="suggestion-item"
+                        onClick={() => handleSuggestionClick('description', suggestion)}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </td>
             <td>
-              <input
-                type="text"
-                className="form-control filter-input"
-                value={inputValues.source}
-                onChange={(e) => handleFilterChange('source', e.target.value)}
-                placeholder="Filter Source"
-                aria-label="Filter by System Source Name"
-              />
+              <div className="input-wrapper" ref={el => dropdownRefs.current.source = el}>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.source}
+                  onChange={(e) => handleFilterChange('source', e.target.value)}
+                  onFocus={() => handleInputFocus('source')}
+                  placeholder="Filter Source"
+                  aria-label="Filter by System Source Name"
+                />
+                {activeDropdown === 'source' && dropdownSuggestions.source.length > 0 && (
+                  <div className="dropdown-suggestions">
+                    {dropdownSuggestions.source.map((suggestion, idx) => (
+                      <div
+                        key={idx}
+                        className="suggestion-item"
+                        onClick={() => handleSuggestionClick('source', suggestion)}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </td>
           </tr>
           {currentData.map((row, idx) => (
@@ -275,6 +406,12 @@ const TransactionCodes = () => {
           background-color: #f8f9fa;
           padding: 6px;
           border: 1px solid #dee2e6;
+          position: relative;
+        }
+        
+        .input-wrapper {
+          position: relative;
+          width: 100%;
         }
         
         .filter-input {
@@ -291,7 +428,7 @@ const TransactionCodes = () => {
         .filter-input:focus {
           outline: none;
           border-color: rgb(23, 41, 176);
-          box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+          box-shadow: 0 0 0 2px rgba(23, 41, 176, 0.1);
         }
         
         .filter-input::placeholder {
@@ -300,9 +437,41 @@ const TransactionCodes = () => {
           font-size: 13px;
         }
         
-        tbody tr:hover {
+        .dropdown-suggestions {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background-color: white;
+          border: 1px solid #ced4da;
+          border-top: none;
+          border-radius: 0 0 3px 3px;
+          max-height: 200px;
+          overflow-y: auto;
+          z-index: 1000;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .suggestion-item {
+          padding: 8px 10px;
+          cursor: pointer;
+          font-size: 14px;
+          border-bottom: 1px solid #f0f0f0;
+          transition: background-color 0.2s;
+        }
+        
+        .suggestion-item:last-child {
+          border-bottom: none;
+        }
+        
+        .suggestion-item:hover {
+          background-color: #e8f4f8;
+        }
+        
+        tbody tr:hover:not(.filter-row) {
           background-color: #f5f5f5;
         }
+        
         
         .pagination-container {
           display: flex;
@@ -332,12 +501,13 @@ const TransactionCodes = () => {
           font-size: 14px;
           cursor: pointer;
           border-radius: 3px;
+          transition: all 0.2s;
         }
         
         .page-btn:hover:not(:disabled) {
-          background-color: #5a9ca6;
+          background-color: rgb(23, 41, 176);
           color: white;
-          border-color: #5a9ca6;
+          border-color: rgb(23, 41, 176);
         }
         
         .page-btn:disabled {
