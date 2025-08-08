@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import transactionData from './Triumph_Trans_Codes.json';
+import * as XLSX from 'xlsx';
 
 const TransactionCodes = () => {
   const [filters, setFilters] = useState({
@@ -219,6 +220,43 @@ const TransactionCodes = () => {
     setShowDownloadMenu(false);
   };
 
+  const downloadAsExcel = () => {
+    // Prepare data for Excel
+    const excelData = filteredData.map(row => {
+      const visibleRow = {};
+      Object.entries(visibleColumns).forEach(([key, isVisible]) => {
+        if (isVisible) {
+          visibleRow[columnLabels[key]] = row[key];
+        }
+      });
+      return visibleRow;
+    });
+
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Convert data to worksheet
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    
+    // Set column widths (optional but makes it look better)
+    const columnWidths = Object.keys(columnLabels)
+      .filter(key => visibleColumns[key])
+      .map(key => ({
+        wch: Math.max(
+          columnLabels[key].length,
+          ...filteredData.map(row => (row[key] || '').toString().length).slice(0, 10)
+        ) + 2
+      }));
+    ws['!cols'] = columnWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Transaction Codes');
+    
+    // Generate Excel file and download
+    XLSX.writeFile(wb, `transaction_codes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    setShowDownloadMenu(false);
+  };
+
   // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -295,11 +333,14 @@ const TransactionCodes = () => {
             {showDownloadMenu && (
               <div className="download-dropdown">
                 <div className="dropdown-header">Export Format</div>
-                <button className="download-option" onClick={downloadAsJSON}>
-                  <span className="file-icon">📄</span> Download as JSON
+                <button className="download-option" onClick={downloadAsExcel}>
+                  <span className="file-icon">📗</span> Download as Excel
                 </button>
                 <button className="download-option" onClick={downloadAsCSV}>
                   <span className="file-icon">📊</span> Download as CSV
+                </button>
+                <button className="download-option" onClick={downloadAsJSON}>
+                  <span className="file-icon">📄</span> Download as JSON
                 </button>
               </div>
             )}
