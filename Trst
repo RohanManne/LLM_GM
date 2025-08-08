@@ -321,7 +321,10 @@ const TransactionCodes = () => {
   return (
     <div className="transaction-codes-container">
       <div className="header-section">
-        <h2>Transaction Codes</h2>
+        <div className="title-section">
+          <h2>Transaction Codes</h2>
+          <p className="subtitle">Enterprise Catalog Business Term Definition: DEFINITION</p>
+        </div>
         <div className="header-controls">
           <div className="download-container" ref={downloadMenuRef}>
             <button 
@@ -578,12 +581,20 @@ const TransactionCodes = () => {
         .header-section {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-end;
           margin-bottom: 20px;
+          padding-bottom: 10px;
         }
         
-        .header-section h2 {
+        .title-section h2 {
+          margin: 0 0 5px 0;
+        }
+        
+        .subtitle {
           margin: 0;
+          font-size: 14px;
+          color: #666;
+          font-style: italic;
         }
         
         .header-controls {
