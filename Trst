@@ -153,16 +153,19 @@ const TransactionCodes = () => {
         }
         
         th, td {
-          padding: 12px;
+          padding: 10px 12px;
           text-align: left;
           vertical-align: middle;
           border: 1px solid #dee2e6;
         }
         
         th {
-          background-color: #f8f9fa;
+          background-color: #5a9ca6;
+          color: white;
           font-weight: 600;
           font-size: 14px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
         
         td {
@@ -171,18 +174,19 @@ const TransactionCodes = () => {
         
         .filter-row td {
           background-color: #f8f9fa;
-          padding: 8px;
+          padding: 6px;
           border: 1px solid #dee2e6;
         }
         
         .filter-input {
           width: 100%;
-          padding: 8px 12px;
+          padding: 6px 10px;
           border: 1px solid #ced4da;
-          border-radius: 4px;
+          border-radius: 3px;
           font-size: 14px;
           background-color: white;
           box-sizing: border-box;
+          height: 32px;
         }
         
         .filter-input:focus {
