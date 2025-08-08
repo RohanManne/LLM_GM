@@ -22,6 +22,8 @@ const TransactionCodes = () => {
 
   const [showColumnToggle, setShowColumnToggle] = useState(false);
   const columnToggleRef = useRef(null);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadMenuRef = useRef(null);
 
   // Column labels
   const columnLabels = {
@@ -159,6 +161,64 @@ const TransactionCodes = () => {
     }));
   };
 
+  // Download functions
+  const downloadAsJSON = () => {
+    const visibleData = filteredData.map(row => {
+      const visibleRow = {};
+      Object.entries(visibleColumns).forEach(([key, isVisible]) => {
+        if (isVisible) {
+          visibleRow[columnLabels[key]] = row[key];
+        }
+      });
+      return visibleRow;
+    });
+
+    const jsonString = JSON.stringify(visibleData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setShowDownloadMenu(false);
+  };
+
+  const downloadAsCSV = () => {
+    // Get visible column headers
+    const headers = Object.entries(columnLabels)
+      .filter(([key]) => visibleColumns[key])
+      .map(([, label]) => label);
+    
+    // Create CSV content
+    let csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
+    
+    filteredData.forEach(row => {
+      const rowData = Object.keys(columnLabels)
+        .filter(key => visibleColumns[key])
+        .map(key => {
+          const value = row[key] || '';
+          // Escape quotes and wrap in quotes if contains comma, quote, or newline
+          const escaped = value.toString().replace(/"/g, '""');
+          return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
+        });
+      csvContent += rowData.join(',') + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setShowDownloadMenu(false);
+  };
+
   // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -173,11 +233,17 @@ const TransactionCodes = () => {
           setShowColumnToggle(false);
         }
       }
+      
+      if (showDownloadMenu && downloadMenuRef.current) {
+        if (!downloadMenuRef.current.contains(event.target)) {
+          setShowDownloadMenu(false);
+        }
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeDropdown, showColumnToggle]);
+  }, [activeDropdown, showColumnToggle, showDownloadMenu]);
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -218,28 +284,49 @@ const TransactionCodes = () => {
     <div className="transaction-codes-container">
       <div className="header-section">
         <h2>Transaction Codes</h2>
-        <div className="column-toggle-container" ref={columnToggleRef}>
-          <button 
-            className="column-toggle-btn"
-            onClick={() => setShowColumnToggle(!showColumnToggle)}
-          >
-            <span className="toggle-icon">⚙️</span> Columns
-          </button>
-          {showColumnToggle && (
-            <div className="column-toggle-dropdown">
-              <div className="dropdown-header">Show/Hide Columns</div>
-              {Object.entries(columnLabels).map(([key, label]) => (
-                <label key={key} className="column-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={visibleColumns[key]}
-                    onChange={() => toggleColumn(key)}
-                  />
-                  <span className="checkbox-label">{label}</span>
-                </label>
-              ))}
-            </div>
-          )}
+        <div className="header-controls">
+          <div className="download-container" ref={downloadMenuRef}>
+            <button 
+              className="download-btn"
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+            >
+              <span className="download-icon">⬇</span> Download
+            </button>
+            {showDownloadMenu && (
+              <div className="download-dropdown">
+                <div className="dropdown-header">Export Format</div>
+                <button className="download-option" onClick={downloadAsJSON}>
+                  <span className="file-icon">📄</span> Download as JSON
+                </button>
+                <button className="download-option" onClick={downloadAsCSV}>
+                  <span className="file-icon">📊</span> Download as CSV
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="column-toggle-container" ref={columnToggleRef}>
+            <button 
+              className="column-toggle-btn"
+              onClick={() => setShowColumnToggle(!showColumnToggle)}
+            >
+              <span className="toggle-icon">⚙️</span> Columns
+            </button>
+            {showColumnToggle && (
+              <div className="column-toggle-dropdown">
+                <div className="dropdown-header">Show/Hide Columns</div>
+                {Object.entries(columnLabels).map(([key, label]) => (
+                  <label key={key} className="column-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[key]}
+                      onChange={() => toggleColumn(key)}
+                    />
+                    <span className="checkbox-label">{label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       
@@ -456,6 +543,78 @@ const TransactionCodes = () => {
         
         .header-section h2 {
           margin: 0;
+        }
+        
+        .header-controls {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+        
+        .download-container {
+          position: relative;
+        }
+        
+        .download-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background-color: white;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .download-btn:hover {
+          background-color: #f8f9fa;
+          border-color: rgb(23, 41, 176);
+        }
+        
+        .download-icon {
+          font-size: 16px;
+        }
+        
+        .download-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          margin-top: 5px;
+          background-color: white;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 1001;
+          min-width: 180px;
+        }
+        
+        .download-option {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          padding: 10px 15px;
+          background: none;
+          border: none;
+          font-size: 14px;
+          color: #333;
+          cursor: pointer;
+          text-align: left;
+          transition: background-color 0.2s;
+        }
+        
+        .download-option:hover {
+          background-color: #f8f9fa;
+        }
+        
+        .download-option:not(:last-child) {
+          border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .file-icon {
+          font-size: 16px;
         }
         
         .column-toggle-container {
