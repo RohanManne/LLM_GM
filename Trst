@@ -10,7 +10,7 @@ const TransactionCodes = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 8;
 
   // Memoize the transformed data to avoid recreation on every render
   const transData = useMemo(() => 
@@ -184,12 +184,6 @@ const TransactionCodes = () => {
         </tbody>
       </table>
       
-      {!filteredData.length && (
-        <div className="no-transactions-found">
-          No Transaction Codes To Be Displayed
-        </div>
-      )}
-      
       {filteredData.length > 0 && (
         <div className="pagination-container">
           <div className="showing-info">
@@ -265,7 +259,7 @@ const TransactionCodes = () => {
         }
         
         th {
-          background-color: #5a9ca6;
+          background-color: rgb(23, 41, 176);
           color: white;
           font-weight: 600;
           font-size: 14px;
@@ -296,7 +290,7 @@ const TransactionCodes = () => {
         
         .filter-input:focus {
           outline: none;
-          border-color: #4CAF50;
+          border-color: rgb(23, 41, 176);
           box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
         }
         
@@ -310,16 +304,6 @@ const TransactionCodes = () => {
           background-color: #f5f5f5;
         }
         
-        .no-transactions-found {
-          text-align: center;
-          padding: 40px 20px;
-          color: #666;
-          font-size: 16px;
-          background-color: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-top: none;
-        }
-        
         .pagination-container {
           display: flex;
           justify-content: space-between;
@@ -327,8 +311,6 @@ const TransactionCodes = () => {
           margin-top: 20px;
           padding: 15px;
           background-color: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-top: none;
         }
         
         .showing-info {
@@ -350,7 +332,6 @@ const TransactionCodes = () => {
           font-size: 14px;
           cursor: pointer;
           border-radius: 3px;
-          transition: all 0.2s;
         }
         
         .page-btn:hover:not(:disabled) {
@@ -369,9 +350,9 @@ const TransactionCodes = () => {
         }
         
         .page-btn.active {
-          background-color: #5a9ca6;
+          background-color: rgb(23, 41, 176);
           color: white;
-          border-color: #5a9ca6;
+          border-color: rgb(23, 41, 176);
         }
         
         .page-ellipsis {
