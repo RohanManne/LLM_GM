@@ -12,6 +12,25 @@ const TransactionCodes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
+  // State for column visibility
+  const [visibleColumns, setVisibleColumns] = useState({
+    name: true,
+    value: true,
+    description: true,
+    source: true
+  });
+
+  const [showColumnToggle, setShowColumnToggle] = useState(false);
+  const columnToggleRef = useRef(null);
+
+  // Column labels
+  const columnLabels = {
+    name: 'Field Name',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name'
+  };
+
   // State for managing dropdowns
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownSuggestions, setDropdownSuggestions] = useState({
@@ -133,6 +152,13 @@ const TransactionCodes = () => {
     }
   };
 
+  const toggleColumn = (column) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [column]: !prev[column]
+    }));
+  };
+
   // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -141,11 +167,17 @@ const TransactionCodes = () => {
           setActiveDropdown(null);
         }
       }
+      
+      if (showColumnToggle && columnToggleRef.current) {
+        if (!columnToggleRef.current.contains(event.target)) {
+          setShowColumnToggle(false);
+        }
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeDropdown]);
+  }, [activeDropdown, showColumnToggle]);
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -184,132 +216,165 @@ const TransactionCodes = () => {
 
   return (
     <div className="transaction-codes-container">
-      <h2>Transaction Codes</h2>
-      <br/>
+      <div className="header-section">
+        <h2>Transaction Codes</h2>
+        <div className="column-toggle-container" ref={columnToggleRef}>
+          <button 
+            className="column-toggle-btn"
+            onClick={() => setShowColumnToggle(!showColumnToggle)}
+          >
+            <span className="toggle-icon">⚙️</span> Columns
+          </button>
+          {showColumnToggle && (
+            <div className="column-toggle-dropdown">
+              <div className="dropdown-header">Show/Hide Columns</div>
+              {Object.entries(columnLabels).map(([key, label]) => (
+                <label key={key} className="column-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={visibleColumns[key]}
+                    onChange={() => toggleColumn(key)}
+                  />
+                  <span className="checkbox-label">{label}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
       <table className="table border table-striped" data-toggle="datatable">
         <thead>
           {/* Header Row */}
           <tr>
-            <th scope="col">Field Name</th>
-            <th scope="col">Field Value</th>
-            <th scope="col">Field Description</th>
-            <th scope="col">System Source Name</th>
+            {visibleColumns.name && <th scope="col">Field Name</th>}
+            {visibleColumns.value && <th scope="col">Field Value</th>}
+            {visibleColumns.description && <th scope="col">Field Description</th>}
+            {visibleColumns.source && <th scope="col">System Source Name</th>}
           </tr>
         </thead>
         <tbody>
           {/* Filter Input Row */}
           <tr className="filter-row">
-            <td>
-              <div className="input-wrapper" ref={el => dropdownRefs.current.name = el}>
-                <input
-                  type="text"
-                  className="form-control filter-input"
-                  value={inputValues.name}
-                  onChange={(e) => handleFilterChange('name', e.target.value)}
-                  onFocus={() => handleInputFocus('name')}
-                  placeholder="Filter Name"
-                  aria-label="Filter by Field Name"
-                />
-                {activeDropdown === 'name' && dropdownSuggestions.name.length > 0 && (
-                  <div className="dropdown-suggestions">
-                    {dropdownSuggestions.name.map((suggestion, idx) => (
-                      <div
-                        key={idx}
-                        className="suggestion-item"
-                        onClick={() => handleSuggestionClick('name', suggestion)}
-                      >
-                        {suggestion}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </td>
-            <td>
-              <div className="input-wrapper" ref={el => dropdownRefs.current.value = el}>
-                <input
-                  type="text"
-                  className="form-control filter-input"
-                  value={inputValues.value}
-                  onChange={(e) => handleFilterChange('value', e.target.value)}
-                  onFocus={() => handleInputFocus('value')}
-                  placeholder="Filter Value"
-                  aria-label="Filter by Field Value"
-                />
-                {activeDropdown === 'value' && dropdownSuggestions.value.length > 0 && (
-                  <div className="dropdown-suggestions">
-                    {dropdownSuggestions.value.map((suggestion, idx) => (
-                      <div
-                        key={idx}
-                        className="suggestion-item"
-                        onClick={() => handleSuggestionClick('value', suggestion)}
-                      >
-                        {suggestion}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </td>
-            <td>
-              <div className="input-wrapper" ref={el => dropdownRefs.current.description = el}>
-                <input
-                  type="text"
-                  className="form-control filter-input"
-                  value={inputValues.description}
-                  onChange={(e) => handleFilterChange('description', e.target.value)}
-                  onFocus={() => handleInputFocus('description')}
-                  placeholder="Filter Description"
-                  aria-label="Filter by Field Description"
-                />
-                {activeDropdown === 'description' && dropdownSuggestions.description.length > 0 && (
-                  <div className="dropdown-suggestions">
-                    {dropdownSuggestions.description.map((suggestion, idx) => (
-                      <div
-                        key={idx}
-                        className="suggestion-item"
-                        onClick={() => handleSuggestionClick('description', suggestion)}
-                      >
-                        {suggestion}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </td>
-            <td>
-              <div className="input-wrapper" ref={el => dropdownRefs.current.source = el}>
-                <input
-                  type="text"
-                  className="form-control filter-input"
-                  value={inputValues.source}
-                  onChange={(e) => handleFilterChange('source', e.target.value)}
-                  onFocus={() => handleInputFocus('source')}
-                  placeholder="Filter Source"
-                  aria-label="Filter by System Source Name"
-                />
-                {activeDropdown === 'source' && dropdownSuggestions.source.length > 0 && (
-                  <div className="dropdown-suggestions">
-                    {dropdownSuggestions.source.map((suggestion, idx) => (
-                      <div
-                        key={idx}
-                        className="suggestion-item"
-                        onClick={() => handleSuggestionClick('source', suggestion)}
-                      >
-                        {suggestion}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </td>
+            {visibleColumns.name && (
+              <td>
+                <div className="input-wrapper" ref={el => dropdownRefs.current.name = el}>
+                  <input
+                    type="text"
+                    className="form-control filter-input"
+                    value={inputValues.name}
+                    onChange={(e) => handleFilterChange('name', e.target.value)}
+                    onFocus={() => handleInputFocus('name')}
+                    placeholder="Filter Name"
+                    aria-label="Filter by Field Name"
+                  />
+                  {activeDropdown === 'name' && dropdownSuggestions.name.length > 0 && (
+                    <div className="dropdown-suggestions">
+                      {dropdownSuggestions.name.map((suggestion, idx) => (
+                        <div
+                          key={idx}
+                          className="suggestion-item"
+                          onClick={() => handleSuggestionClick('name', suggestion)}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </td>
+            )}
+            {visibleColumns.value && (
+              <td>
+                <div className="input-wrapper" ref={el => dropdownRefs.current.value = el}>
+                  <input
+                    type="text"
+                    className="form-control filter-input"
+                    value={inputValues.value}
+                    onChange={(e) => handleFilterChange('value', e.target.value)}
+                    onFocus={() => handleInputFocus('value')}
+                    placeholder="Filter Value"
+                    aria-label="Filter by Field Value"
+                  />
+                  {activeDropdown === 'value' && dropdownSuggestions.value.length > 0 && (
+                    <div className="dropdown-suggestions">
+                      {dropdownSuggestions.value.map((suggestion, idx) => (
+                        <div
+                          key={idx}
+                          className="suggestion-item"
+                          onClick={() => handleSuggestionClick('value', suggestion)}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </td>
+            )}
+            {visibleColumns.description && (
+              <td>
+                <div className="input-wrapper" ref={el => dropdownRefs.current.description = el}>
+                  <input
+                    type="text"
+                    className="form-control filter-input"
+                    value={inputValues.description}
+                    onChange={(e) => handleFilterChange('description', e.target.value)}
+                    onFocus={() => handleInputFocus('description')}
+                    placeholder="Filter Description"
+                    aria-label="Filter by Field Description"
+                  />
+                  {activeDropdown === 'description' && dropdownSuggestions.description.length > 0 && (
+                    <div className="dropdown-suggestions">
+                      {dropdownSuggestions.description.map((suggestion, idx) => (
+                        <div
+                          key={idx}
+                          className="suggestion-item"
+                          onClick={() => handleSuggestionClick('description', suggestion)}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </td>
+            )}
+            {visibleColumns.source && (
+              <td>
+                <div className="input-wrapper" ref={el => dropdownRefs.current.source = el}>
+                  <input
+                    type="text"
+                    className="form-control filter-input"
+                    value={inputValues.source}
+                    onChange={(e) => handleFilterChange('source', e.target.value)}
+                    onFocus={() => handleInputFocus('source')}
+                    placeholder="Filter Source"
+                    aria-label="Filter by System Source Name"
+                  />
+                  {activeDropdown === 'source' && dropdownSuggestions.source.length > 0 && (
+                    <div className="dropdown-suggestions">
+                      {dropdownSuggestions.source.map((suggestion, idx) => (
+                        <div
+                          key={idx}
+                          className="suggestion-item"
+                          onClick={() => handleSuggestionClick('source', suggestion)}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </td>
+            )}
           </tr>
           {currentData.map((row, idx) => (
             <tr key={`trans-code-${startIndex + idx}`}>
-              <td>{row.name}</td>
-              <td>{row.value}</td>
-              <td>{row.description}</td>
-              <td>{row.source}</td>
+              {visibleColumns.name && <td>{row.name}</td>}
+              {visibleColumns.value && <td>{row.value}</td>}
+              {visibleColumns.description && <td>{row.description}</td>}
+              {visibleColumns.source && <td>{row.source}</td>}
             </tr>
           ))}
         </tbody>
@@ -382,10 +447,91 @@ const TransactionCodes = () => {
           padding: 20px;
         }
         
+        .header-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+        
+        .header-section h2 {
+          margin: 0;
+        }
+        
+        .column-toggle-container {
+          position: relative;
+        }
+        
+        .column-toggle-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background-color: white;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .column-toggle-btn:hover {
+          background-color: #f8f9fa;
+          border-color: rgb(23, 41, 176);
+        }
+        
+        .toggle-icon {
+          font-size: 16px;
+        }
+        
+        .column-toggle-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          margin-top: 5px;
+          background-color: white;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 1001;
+          min-width: 200px;
+        }
+        
+        .dropdown-header {
+          padding: 10px 15px;
+          border-bottom: 1px solid #dee2e6;
+          font-weight: 600;
+          font-size: 14px;
+          color: #333;
+        }
+        
+        .column-checkbox {
+          display: flex;
+          align-items: center;
+          padding: 8px 15px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        
+        .column-checkbox:hover {
+          background-color: #f8f9fa;
+        }
+        
+        .column-checkbox input[type="checkbox"] {
+          margin-right: 10px;
+          cursor: pointer;
+        }
+        
+        .checkbox-label {
+          font-size: 14px;
+          color: #333;
+          user-select: none;
+        }
+        
         table {
           width: 100%;
           border-collapse: collapse;
-          table-layout: fixed;
+          table-layout: auto;
         }
         
         th, td {
