@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+this is my code now: import React, { useState } from 'react';
 import transactionData from './Triumph_Trans_Codes.json';
-
 const TransactionCodes = () => {
   const [filters, setFilters] = useState({
     name: '',
@@ -8,28 +7,23 @@ const TransactionCodes = () => {
     description: '',
     source: '',
   });
-
   const transData = transactionData.Triumph_Trans_Codes.map((item) => ({
     name: item['Field Name'] || '',
     value: item['Field Value'] || '',
     description: item['Field Description'] || '',
     source: item['System Source Name'] || '',
   }));
-
   const filteredData = transData.filter((row) =>
     Object.entries(filters).every(
       ([key, val]) => row[key].toLowerCase().includes(val.toLowerCase())
     )
   );
-
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
-
   return (
     <div>
       <h2>Transaction Codes</h2>
-
       {!filteredData.length ? (
         <h2 className="no-transactions-found text-align-center">
           No Transaction Codes To Be Displayed
@@ -37,15 +31,14 @@ const TransactionCodes = () => {
       ) : (
         <table className="table border table-striped" data-toggle="datatable">
           <thead>
-            {/* Header Row */}
+            {/* Header Row /}
             <tr>
               <th scope="col">Field Name</th>
               <th scope="col">Field Value</th>
               <th scope="col">Field Description</th>
               <th scope="col">System Source Name</th>
             </tr>
-
-            {/* Filter Input Row */}
+            {/ Filter Input Row */}
             <tr>
               <th>
                 <input
@@ -83,7 +76,254 @@ const TransactionCodes = () => {
               </th>
             </tr>
           </thead>
+          <tbody>
+            {filteredData.map((row, idx) => (
+              <tr key={trans-code-${idx}}>
+                <td>{row.name}</td>
+                <td>{row.value}</td>
+                <td>{row.description}</td>
+                <td>{row.source}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+};
+export default TransactionCodes;
 
+Your code looks well-structured! It's a clean React component that displays transaction codes with filtering capabilities. Here are a few observations and potential improvements you might consider:
+Current Strengths
+
+    Clean filtering logic with multiple filter fields
+    Good handling of empty states
+    Proper use of React hooks
+    Clear data transformation from the JSON structure
+
+Potential Enhancements
+1. Performance Optimization
+
+Currently, transData is recreated on every render. You could memoize it:
+javascript
+
+import React, { useState, useMemo } from 'react';
+
+const TransactionCodes = () => {
+  const transData = useMemo(() => 
+    transactionData.Triumph_Trans_Codes.map((item) => ({
+      name: item['Field Name'] || '',
+      value: item['Field Value'] || '',
+      description: item['Field Description'] || '',
+      source: item['System Source Name'] || '',
+    })), []
+  );
+  // rest of your code...
+
+2. Case-Insensitive Filtering Edge Case
+
+Your current filtering handles empty strings well, but you might want to trim whitespace:
+javascript
+
+const filteredData = transData.filter((row) =>
+  Object.entries(filters).every(
+    ([key, val]) => row[key].toLowerCase().includes(val.trim().toLowerCase())
+  )
+);
+
+3. Styling Suggestions
+
+For the filter inputs, you might want to add some CSS classes for better styling:
+javascript
+
+<input
+  type="text"
+  className="form-control"
+  value={filters.name}
+  onChange={(e) => handleFilterChange('name', e.target.value)}
+  placeholder="Filter Name"
+/>
+
+4. Accessibility Enhancement
+
+Consider adding aria-labels for better screen reader support:
+javascript
+
+<input
+  type="text"
+  aria-label="Filter by Field Name"
+  value={filters.name}
+  onChange={(e) => handleFilterChange('name', e.target.value)}
+  placeholder="Filter Name"
+/>
+
+5. Optional: Debouncing
+
+If you have a large dataset, you might want to debounce the filter inputs to reduce the number of filtering operations:
+javascript
+
+import { useMemo, useCallback } from 'react';
+import debounce from 'lodash.debounce';
+
+const debouncedFilter = useCallback(
+  debounce((field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  }, 300),
+  []
+);
+
+The code as it stands is functional and clean. These suggestions are just optimizations you could consider based on your specific needs and dataset size.
+
+can you do all that
+
+I've implemented all the improvements to your Transaction Codes component:
+Key Changes Made:
+
+    Performance Optimization
+        Added useMemo for transData to prevent recreation on every render
+        Also memoized filteredData for better performance
+
+    Debouncing
+        Implemented a custom debounce function (since lodash isn't available in the environment)
+        Created separate inputValues state for immediate UI updates while debouncing the actual filtering
+        300ms delay prevents excessive filtering operations on large datasets
+
+    Improved Filtering
+        Added .trim() to filter values to handle whitespace properly
+
+    Accessibility Enhancements
+        Added aria-label attributes to all filter inputs for better screen reader support
+
+    Styling Improvements
+        Added form-control and custom filter-input classes
+        Included inline styles for better visual presentation
+        Added focus states, hover effects, and responsive design
+
+
+import React, { useState, useMemo, useCallback } from 'react';
+import transactionData from './Triumph_Trans_Codes.json';
+
+const TransactionCodes = () => {
+  const [filters, setFilters] = useState({
+    name: '',
+    value: '',
+    description: '',
+    source: '',
+  });
+
+  // Memoize the transformed data to avoid recreation on every render
+  const transData = useMemo(() => 
+    transactionData.Triumph_Trans_Codes.map((item) => ({
+      name: item['Field Name'] || '',
+      value: item['Field Value'] || '',
+      description: item['Field Description'] || '',
+      source: item['System Source Name'] || '',
+    })), []
+  );
+
+  // Memoize filtered data with trimmed filter values
+  const filteredData = useMemo(() => 
+    transData.filter((row) =>
+      Object.entries(filters).every(
+        ([key, val]) => row[key].toLowerCase().includes(val.trim().toLowerCase())
+      )
+    ), [transData, filters]
+  );
+
+  // Debounce function to reduce filtering operations on large datasets
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
+  // Create debounced filter handler
+  const debouncedSetFilters = useCallback(
+    debounce((field, value) => {
+      setFilters((prev) => ({ ...prev, [field]: value }));
+    }, 300),
+    []
+  );
+
+  // State for input values (separate from filters for debouncing)
+  const [inputValues, setInputValues] = useState({
+    name: '',
+    value: '',
+    description: '',
+    source: '',
+  });
+
+  const handleFilterChange = (field, value) => {
+    // Update input immediately for responsive UI
+    setInputValues((prev) => ({ ...prev, [field]: value }));
+    // Debounce the actual filter update
+    debouncedSetFilters(field, value);
+  };
+
+  return (
+    <div className="transaction-codes-container">
+      <h2>Transaction Codes</h2>
+        <table className="table border table-striped" data-toggle="datatable">
+          <thead>
+            {/* Header Row */}
+            <tr>
+              <th scope="col">Field Name</th>
+              <th scope="col">Field Value</th>
+              <th scope="col">Field Description</th>
+              <th scope="col">System Source Name</th>
+            </tr>
+            {/* Filter Input Row */}
+            <tr>
+              <th>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.name}
+                  onChange={(e) => handleFilterChange('name', e.target.value)}
+                  placeholder="Filter Name"
+                  aria-label="Filter by Field Name"
+                />
+              </th>
+              <th>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.value}
+                  onChange={(e) => handleFilterChange('value', e.target.value)}
+                  placeholder="Filter Value"
+                  aria-label="Filter by Field Value"
+                />
+              </th>
+              <th>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.description}
+                  onChange={(e) =>
+                    handleFilterChange('description', e.target.value)
+                  }
+                  placeholder="Filter Description"
+                  aria-label="Filter by Field Description"
+                />
+              </th>
+              <th>
+                <input
+                  type="text"
+                  className="form-control filter-input"
+                  value={inputValues.source}
+                  onChange={(e) => handleFilterChange('source', e.target.value)}
+                  placeholder="Filter Source"
+                  aria-label="Filter by System Source Name"
+                />
+              </th>
+            </tr>
+          </thead>
           <tbody>
             {filteredData.map((row, idx) => (
               <tr key={`trans-code-${idx}`}>
@@ -95,7 +335,60 @@ const TransactionCodes = () => {
             ))}
           </tbody>
         </table>
-      )}
+      }
+      
+      <style jsx>{`
+        .transaction-codes-container {
+          padding: 20px;
+        }
+        
+        .filter-input {
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+          transition: border-color 0.3s;
+        }
+        
+        .filter-input:focus {
+          outline: none;
+          border-color: #4CAF50;
+          box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+        
+        .filter-input::placeholder {
+          color: #999;
+          opacity: 1;
+        }
+        
+        .no-transactions-found {
+          color: #666;
+          padding: 40px 20px;
+          text-align: center;
+        }
+        
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        
+        th {
+          background-color: #f8f9fa;
+          font-weight: 600;
+        }
+        
+        tbody tr:hover {
+          background-color: #f5f5f5;
+        }
+        
+        @media (max-width: 768px) {
+          .filter-input {
+            font-size: 12px;
+            padding: 6px 8px;
+          }
+        }
+      `}</style>
     </div>
   );
 };
