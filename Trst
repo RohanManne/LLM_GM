@@ -1,310 +1,103 @@
-git commit -am "feat: add column-specific filters, autocomplete suggestions, export functionality, and UI refinements
-
-- Implemented individual input filters for Field Name, Field Value, Field Description, and System Source Name
-- Added autocomplete suggestion dropdowns under each input field
-- Enabled column visibility toggling via FilterMenu with Apply and Reset options
-- Made JSON/CSV download respect current filters and visible columns
-- Rendered filter input row directly beneath table headers for better UX alignment
-- Styled input boxes to stretch full width of table cells with transparent background and only bottom borders
-- Fixed various rendering and interaction bugs with filters and downloads
-- Updated FilterMenu to reflect column visibility and persist across tabs
-- Added README with npm setup instructions
-"
-
 import React, { useState } from 'react';
-import {
-  DataTable, DataTableHead, DataTableBody, DataTableRow,
-  DataTableCell, DataTableHeadCell, Button
-} from '@americanexpress/dls-react';
-import { IconDownload, IconFilter } from '@americanexpress/dls-icons';
+import transactionData from './Triumph_Trans_Codes.json';
 
-import triumphTransData from '../data/Triumph_Trans_Codes.json';
-import triumphStatusData from '../data/Triumph_Status_Codes.json';
-import FilterMenu from './FilterMenu';
-
-const TabbedTables = () => {
-  const [activeTab, setActiveTab] = useState(null);
-  const [filters, setFilters] = useState(['name', 'value', 'description', 'source']);
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
-  const [inputFilters, setInputFilters] = useState({
-    trans: { name: '', value: '', description: '', source: '' },
-    acct: { name: '', value: '', description: '', source: '' },
-  });
-  const [suggestions, setSuggestions] = useState({
-    name: [], value: [], description: [], source: []
+const TransactionCodes = () => {
+  const [filters, setFilters] = useState({
+    name: '',
+    value: '',
+    description: '',
+    source: '',
   });
 
-  const transData = triumphTransData.Triumph_Trans_Codes.map((item) => ({
-    name: item['Field Name'],
-    value: item['Field Value'],
-    description: item['Field Description'],
-    source: item['System Source Name'],
+  const transData = transactionData.Triumph_Trans_Codes.map((item) => ({
+    name: item['Field Name'] || '',
+    value: item['Field Value'] || '',
+    description: item['Field Description'] || '',
+    source: item['System Source Name'] || '',
   }));
 
-  const acctData = triumphStatusData.Triumph_Status_Codes.map((item) => ({
-    name: item['Field Name'],
-    value: item['Field Value'],
-    description: item['Field Description'],
-    source: item['System Source Name'],
-  }));
-
-  const allData = activeTab === 'trans' ? transData : acctData;
-
-  const getFilteredRows = () => {
-    const currentInput = inputFilters[activeTab];
-    return allData.filter((row) =>
-      (!currentInput.name || row.name?.toLowerCase().includes(currentInput.name.toLowerCase())) &&
-      (!currentInput.value || row.value?.toLowerCase().includes(currentInput.value.toLowerCase())) &&
-      (!currentInput.description || row.description?.toLowerCase().includes(currentInput.description.toLowerCase())) &&
-      (!currentInput.source || row.source?.toLowerCase().includes(currentInput.source.toLowerCase()))
-    );
-  };
-
-  const handleToggle = (tab) => {
-    setActiveTab(tab);
-    setShowDownloadMenu(false);
-    setShowFilterMenu(false);
-    setInputFilters((prev) => ({
-      ...prev,
-      [tab]: { name: '', value: '', description: '', source: '' }
-    }));
-    setSuggestions({ name: [], value: [], description: [], source: [] });
-  };
-
-  const handleInputChange = (field, value) => {
-    setInputFilters((prev) => ({
-      ...prev,
-      [activeTab]: {
-        ...prev[activeTab],
-        [field]: value
-      }
-    }));
-
-    const matches = [...new Set(
-      allData
-        .map((item) => item[field])
-        .filter((val) => val?.toLowerCase().includes(value.toLowerCase()))
-    )].slice(0, 5); // Top 5 suggestions
-
-    setSuggestions((prev) => ({
-      ...prev,
-      [field]: value ? matches : []
-    }));
-  };
-
-  const handleSuggestionClick = (field, value) => {
-    handleInputChange(field, value);
-    setSuggestions((prev) => ({ ...prev, [field]: [] }));
-  };
-
-  const renderInputWithSuggestions = (field, placeholder) => (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={inputFilters[activeTab][field]}
-        onChange={(e) => handleInputChange(field, e.target.value)}
-        style={inputStyle}
-      />
-      {suggestions[field].length > 0 && (
-        <div style={suggestionBoxStyle}>
-          {suggestions[field].map((item, idx) => (
-            <div
-              key={idx}
-              style={suggestionItemStyle}
-              onClick={() => handleSuggestionClick(field, item)}
-            >
-              {item}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+  const filteredData = transData.filter((row) =>
+    Object.entries(filters).every(
+      ([key, val]) => row[key].toLowerCase().includes(val.toLowerCase())
+    )
   );
 
-  const downloadData = (format) => {
-    const data = getFilteredRows();
-    let blob, filename;
-
-    if (format === 'json') {
-      const trimmed = data.map((row) => {
-        const newRow = {};
-        filters.forEach((key) => (newRow[key] = row[key]));
-        return newRow;
-      });
-      blob = new Blob([JSON.stringify(trimmed, null, 2)], { type: 'application/json' });
-      filename = activeTab === 'trans' ? 'Transaction_Codes.json' : 'Account_Status_Codes.json';
-    } else {
-      const header = filters.join(',');
-      const csvRows = data.map(row => filters.map(f => `"${row[f] ?? ''}"`).join(','));
-      const csvContent = [header, ...csvRows].join('\n');
-      blob = new Blob([csvContent], { type: 'text/csv' });
-      filename = activeTab === 'trans' ? 'Transaction_Codes.csv' : 'Account_Status_Codes.csv';
-    }
-
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-    setShowDownloadMenu(false);
-	};
-
-	const renderTable = (rows) => (
-  <div style={{ maxHeight: '60vh', overflow: 'auto', padding: '0 10%', boxSizing: 'border-box' }}>
-    <DataTable borders="all" density="default" tableLayout="auto">
-      <DataTableHead>
-        <DataTableRow>
-          {filters.includes('name') && (
-            <DataTableHeadCell>
-              Field Name
-              {renderInputWithSuggestions('name', 'Filter...')}
-            </DataTableHeadCell>
-          )}
-          {filters.includes('value') && (
-            <DataTableHeadCell>
-              Field Value
-              {renderInputWithSuggestions('value', 'Filter...')}
-            </DataTableHeadCell>
-          )}
-          {filters.includes('description') && (
-            <DataTableHeadCell>
-              Field Description
-              {renderInputWithSuggestions('description', 'Filter...')}
-            </DataTableHeadCell>
-          )}
-          {filters.includes('source') && (
-            <DataTableHeadCell>
-              System Source Name
-              {renderInputWithSuggestions('source', 'Filter...')}
-            </DataTableHeadCell>
-          )}
-        </DataTableRow>
-      </DataTableHead>
-      <DataTableBody>
-        {rows.map((row, i) => (
-          <DataTableRow key={i}>
-            {filters.includes('name') && <DataTableCell>{row.name}</DataTableCell>}
-            {filters.includes('value') && <DataTableCell>{row.value}</DataTableCell>}
-            {filters.includes('description') && <DataTableCell>{row.description}</DataTableCell>}
-            {filters.includes('source') && <DataTableCell>{row.source}</DataTableCell>}
-          </DataTableRow>
-        ))}
-      </DataTableBody>
-    </DataTable>
-  </div>
-);
+  const handleFilterChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
-        <Button variant={activeTab === 'trans' ? 'secondary' : 'primary'} onClick={() => handleToggle('trans')}>
-          Transaction Codes
-        </Button>
-        <Button variant={activeTab === 'acct' ? 'secondary' : 'primary'} onClick={() => handleToggle('acct')}>
-          Account Status Codes
-        </Button>
-      </div>
+      <h2>Transaction Codes</h2>
 
-      {activeTab && (
-        <>
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            {renderInputWithSuggestions('name', 'Filter Field Name...')}
-            {renderInputWithSuggestions('value', 'Filter Field Value...')}
-            {renderInputWithSuggestions('description', 'Filter Description...')}
-            {renderInputWithSuggestions('source', 'Filter System Source...')}
-          </div>
+      {!filteredData.length ? (
+        <h2 className="no-transactions-found text-align-center">
+          No Transaction Codes To Be Displayed
+        </h2>
+      ) : (
+        <table className="table border table-striped" data-toggle="datatable">
+          <thead>
+            {/* Header Row */}
+            <tr>
+              <th scope="col">Field Name</th>
+              <th scope="col">Field Value</th>
+              <th scope="col">Field Description</th>
+              <th scope="col">System Source Name</th>
+            </tr>
 
-          <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', position: 'relative' }}>
-            <IconDownload
-              filled
-              title="Download"
-              onClick={() => {
-                setShowDownloadMenu((prev) => !prev);
-                setShowFilterMenu(false);
-              }}
-              style={iconStyle}
-            />
-            <IconFilter
-              filled
-              title="Filter"
-              onClick={() => {
-                setShowFilterMenu((prev) => !prev);
-                setShowDownloadMenu(false);
-              }}
-              style={iconStyle}
-            />
+            {/* Filter Input Row */}
+            <tr>
+              <th>
+                <input
+                  type="text"
+                  value={filters.name}
+                  onChange={(e) => handleFilterChange('name', e.target.value)}
+                  placeholder="Filter Name"
+                />
+              </th>
+              <th>
+                <input
+                  type="text"
+                  value={filters.value}
+                  onChange={(e) => handleFilterChange('value', e.target.value)}
+                  placeholder="Filter Value"
+                />
+              </th>
+              <th>
+                <input
+                  type="text"
+                  value={filters.description}
+                  onChange={(e) =>
+                    handleFilterChange('description', e.target.value)
+                  }
+                  placeholder="Filter Description"
+                />
+              </th>
+              <th>
+                <input
+                  type="text"
+                  value={filters.source}
+                  onChange={(e) => handleFilterChange('source', e.target.value)}
+                  placeholder="Filter Source"
+                />
+              </th>
+            </tr>
+          </thead>
 
-            {showDownloadMenu && (
-              <div style={dropdownStyle}>
-                <div style={dropdownItem} onClick={() => downloadData('json')}>Download JSON</div>
-                <div style={dropdownItem} onClick={() => downloadData('csv')}>Download CSV</div>
-              </div>
-            )}
-
-            {showFilterMenu && (
-              <div style={{ ...dropdownStyle, left: '60px' }}>
-                <FilterMenu filters={filters} setFilters={setFilters} />
-              </div>
-            )}
-          </div>
-        </>
+          <tbody>
+            {filteredData.map((row, idx) => (
+              <tr key={`trans-code-${idx}`}>
+                <td>{row.name}</td>
+                <td>{row.value}</td>
+                <td>{row.description}</td>
+                <td>{row.source}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
-
-      {activeTab && renderTable(getFilteredRows())}
     </div>
   );
 };
 
-// Styles
-const inputStyle = {
-  padding: '8px',
-  width: '250px',
-  border: '1px solid #ccc',
-  borderRadius: '4px',
-  marginRight: '8px'
-};
-
-const suggestionBoxStyle = {
-  position: 'absolute',
-  top: '38px',
-  left: 0,
-  width: '100%',
-  background: '#fff',
-  border: '1px solid #ccc',
-  borderRadius: '4px',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-  zIndex: 15
-};
-
-const suggestionItemStyle = {
-  padding: '6px',
-  cursor: 'pointer',
-  borderBottom: '1px solid #eee'
-};
-
-const iconStyle = {
-  border: '1px solid #ccc',
-  borderRadius: '4px',
-  padding: '6px',
-  cursor: 'pointer'
-};
-
-const dropdownStyle = {
-  position: 'absolute',
-  top: '36px',
-  left: '0',
-  background: 'white',
-  border: '1px solid #ccc',
-  borderRadius: '4px',
-  zIndex: 10,
-  padding: '8px',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-};
-
-const dropdownItem = {
-  padding: '6px',
-  cursor: 'pointer'
-};
-
-export default TabbedTables;
+export default TransactionCodes;
