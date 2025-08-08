@@ -67,6 +67,7 @@ const TransactionCodes = () => {
   return (
     <div className="transaction-codes-container">
       <h2>Transaction Codes</h2>
+      <br/>
         <table className="table border table-striped" data-toggle="datatable">
           <thead>
             {/* Header Row */}
@@ -76,6 +77,8 @@ const TransactionCodes = () => {
               <th scope="col">Field Description</th>
               <th scope="col">System Source Name</th>
             </tr>
+          </thead>
+          <tbody>
             {/* Filter Input Row */}
             <tr>
               <th>
@@ -121,8 +124,7 @@ const TransactionCodes = () => {
                 />
               </th>
             </tr>
-          </thead>
-          <tbody>
+
             {filteredData.map((row, idx) => (
               <tr key={`trans-code-${idx}`}>
                 <td>{row.name}</td>
@@ -144,8 +146,7 @@ const TransactionCodes = () => {
           padding: 8px 12px;
           border: 1px solid #ddd;
           border-radius: 4px;
-          font-size: 14px;
-          transition: border-color 0.3s;
+          font-size: 20px;
         }
         
         .filter-input:focus {
@@ -157,12 +158,6 @@ const TransactionCodes = () => {
         .filter-input::placeholder {
           color: #999;
           opacity: 1;
-        }
-        
-        .no-transactions-found {
-          color: #666;
-          padding: 40px 20px;
-          text-align: center;
         }
         
         table {
@@ -179,12 +174,6 @@ const TransactionCodes = () => {
           background-color: #f5f5f5;
         }
         
-        @media (max-width: 768px) {
-          .filter-input {
-            font-size: 12px;
-            padding: 6px 8px;
-          }
-        }
       `}</style>
     </div>
   );
