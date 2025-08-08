@@ -315,6 +315,12 @@ const TransactionCodes = () => {
         </tbody>
       </table>
       
+      {!filteredData.length && (
+        <div className="no-transactions-found">
+          No Transaction Codes To Be Displayed
+        </div>
+      )}
+      
       {filteredData.length > 0 && (
         <div className="pagination-container">
           <div className="showing-info">
@@ -472,6 +478,15 @@ const TransactionCodes = () => {
           background-color: #f5f5f5;
         }
         
+        .no-transactions-found {
+          text-align: center;
+          padding: 40px 20px;
+          color: #666;
+          font-size: 16px;
+          background-color: #f8f9fa;
+          border: 1px solid #dee2e6;
+          border-top: none;
+        }
         
         .pagination-container {
           display: flex;
