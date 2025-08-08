@@ -9,6 +9,9 @@ const TransactionCodes = () => {
     source: '',
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
   // Memoize the transformed data to avoid recreation on every render
   const transData = useMemo(() => 
     transactionData.Triumph_Trans_Codes.map((item) => ({
@@ -27,6 +30,17 @@ const TransactionCodes = () => {
       )
     ), [transData, filters]
   );
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   // Debounce function to reduce filtering operations on large datasets
   const debounce = (func, wait) => {
@@ -62,6 +76,41 @@ const TransactionCodes = () => {
     setInputValues((prev) => ({ ...prev, [field]: value }));
     // Debounce the actual filter update
     debouncedSetFilters(field, value);
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
   };
 
   return (
@@ -124,8 +173,8 @@ const TransactionCodes = () => {
               />
             </td>
           </tr>
-          {filteredData.map((row, idx) => (
-            <tr key={`trans-code-${idx}`}>
+          {currentData.map((row, idx) => (
+            <tr key={`trans-code-${startIndex + idx}`}>
               <td>{row.name}</td>
               <td>{row.value}</td>
               <td>{row.description}</td>
@@ -138,6 +187,62 @@ const TransactionCodes = () => {
       {!filteredData.length && (
         <div className="no-transactions-found">
           No Transaction Codes To Be Displayed
+        </div>
+      )}
+      
+      {filteredData.length > 0 && (
+        <div className="pagination-container">
+          <div className="showing-info">
+            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
+          </div>
+          
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <button 
+                className="page-btn"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </button>
+              <button 
+                className="page-btn"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              
+              {getPageNumbers().map((page, index) => (
+                page === '...' ? (
+                  <span key={`ellipsis-${index}`} className="page-ellipsis">...</span>
+                ) : (
+                  <button
+                    key={`page-${page}`}
+                    className={`page-btn page-number ${currentPage === page ? 'active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                )
+              ))}
+              
+              <button 
+                className="page-btn"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              <button 
+                className="page-btn"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </button>
+            </div>
+          )}
         </div>
       )}
       
@@ -213,6 +318,65 @@ const TransactionCodes = () => {
           background-color: #f8f9fa;
           border: 1px solid #dee2e6;
           border-top: none;
+        }
+        
+        .pagination-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 20px;
+          padding: 15px;
+          background-color: #f8f9fa;
+          border: 1px solid #dee2e6;
+          border-top: none;
+        }
+        
+        .showing-info {
+          font-size: 14px;
+          color: #666;
+        }
+        
+        .pagination-controls {
+          display: flex;
+          gap: 5px;
+          align-items: center;
+        }
+        
+        .page-btn {
+          padding: 6px 12px;
+          border: 1px solid #dee2e6;
+          background-color: white;
+          color: #333;
+          font-size: 14px;
+          cursor: pointer;
+          border-radius: 3px;
+          transition: all 0.2s;
+        }
+        
+        .page-btn:hover:not(:disabled) {
+          background-color: #5a9ca6;
+          color: white;
+          border-color: #5a9ca6;
+        }
+        
+        .page-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .page-btn.page-number {
+          min-width: 35px;
+        }
+        
+        .page-btn.active {
+          background-color: #5a9ca6;
+          color: white;
+          border-color: #5a9ca6;
+        }
+        
+        .page-ellipsis {
+          padding: 0 8px;
+          color: #666;
         }
       `}</style>
     </div>
