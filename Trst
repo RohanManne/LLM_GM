@@ -1,909 +1,991 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import transactionData from './Triumph_Trans_Codes.json';
-import * as XLSX from 'xlsx';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from ‘react’;
+import transactionData from ‘./Triumph_Trans_Codes.json’;
+import * as XLSX from ‘xlsx’;
 
 const TransactionCodes = () => {
-  const [filters, setFilters] = useState({
-    name: '',
-    value: '',
-    description: '',
-    source: '',
-  });
+const [filters, setFilters] = useState({
+name: ‘’,
+value: ‘’,
+description: ‘’,
+source: ‘’,
+});
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 8;
+const [currentPage, setCurrentPage] = useState(1);
+const rowsPerPage = 8;
 
-  // State for column visibility
-  const [visibleColumns, setVisibleColumns] = useState({
-    name: true,
-    value: true,
-    description: true,
-    source: true
-  });
+// State for column visibility
+const [visibleColumns, setVisibleColumns] = useState({
+name: true,
+value: true,
+description: true,
+source: true
+});
 
-  const [showColumnToggle, setShowColumnToggle] = useState(false);
-  const columnToggleRef = useRef(null);
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
-  const downloadMenuRef = useRef(null);
+const [showColumnToggle, setShowColumnToggle] = useState(false);
+const columnToggleRef = useRef(null);
+const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+const downloadMenuRef = useRef(null);
 
-  // Column labels
-  const columnLabels = {
-    name: 'Field Name',
-    value: 'Field Value',
-    description: 'Field Description',
-    source: 'System Source Name'
-  };
+// Column labels
+const columnLabels = {
+name: ‘Field Name’,
+value: ‘Field Value’,
+description: ‘Field Description’,
+source: ‘System Source Name’
+};
 
-  // State for managing dropdowns
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const [dropdownSuggestions, setDropdownSuggestions] = useState({
-    name: [],
-    value: [],
-    description: [],
-    source: []
-  });
+// State for managing dropdowns
+const [activeDropdown, setActiveDropdown] = useState(null);
+const [dropdownSuggestions, setDropdownSuggestions] = useState({
+name: [],
+value: [],
+description: [],
+source: []
+});
 
-  // Refs for click outside detection
-  const dropdownRefs = useRef({});
+// Refs for click outside detection
+const dropdownRefs = useRef({});
 
-  // Memoize the transformed data to avoid recreation on every render
-  const transData = useMemo(() => 
-    transactionData.Triumph_Trans_Codes.map((item) => ({
-      name: item['Field Name'] || '',
-      value: item['Field Value'] || '',
-      description: item['Field Description'] || '',
-      source: item['System Source Name'] || '',
-    })), []
-  );
+// Memoize the transformed data to avoid recreation on every render
+const transData = useMemo(() =>
+transactionData.Triumph_Trans_Codes.map((item) => ({
+name: item[‘Field Name’] || ‘’,
+value: item[‘Field Value’] || ‘’,
+description: item[‘Field Description’] || ‘’,
+source: item[‘System Source Name’] || ‘’,
+})), []
+);
 
-  // Get unique values for each field for suggestions
-  const uniqueValues = useMemo(() => ({
-    name: [...new Set(transData.map(item => item.name))].filter(Boolean).sort(),
-    value: [...new Set(transData.map(item => item.value))].filter(Boolean).sort(),
-    description: [...new Set(transData.map(item => item.description))].filter(Boolean).sort(),
-    source: [...new Set(transData.map(item => item.source))].filter(Boolean).sort(),
-  }), [transData]);
+// Get unique values for each field for suggestions
+const uniqueValues = useMemo(() => ({
+name: […new Set(transData.map(item => item.name))].filter(Boolean).sort(),
+value: […new Set(transData.map(item => item.value))].filter(Boolean).sort(),
+description: […new Set(transData.map(item => item.description))].filter(Boolean).sort(),
+source: […new Set(transData.map(item => item.source))].filter(Boolean).sort(),
+}), [transData]);
 
-  // Memoize filtered data with trimmed filter values
-  const filteredData = useMemo(() => 
-    transData.filter((row) =>
-      Object.entries(filters).every(
-        ([key, val]) => row[key].toLowerCase().includes(val.trim().toLowerCase())
-      )
-    ), [transData, filters]
-  );
+// Memoize filtered data with trimmed filter values
+const filteredData = useMemo(() =>
+transData.filter((row) =>
+Object.entries(filters).every(
+([key, val]) => row[key].toLowerCase().includes(val.trim().toLowerCase())
+)
+), [transData, filters]
+);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
+// Calculate pagination
+const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+const startIndex = (currentPage - 1) * rowsPerPage;
+const endIndex = startIndex + rowsPerPage;
+const currentData = filteredData.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filters change
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [filters]);
+// Reset to page 1 when filters change
+useMemo(() => {
+setCurrentPage(1);
+}, [filters]);
 
-  // Debounce function to reduce filtering operations on large datasets
-  const debounce = (func, wait) => {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  };
+// Debounce function to reduce filtering operations on large datasets
+const debounce = (func, wait) => {
+let timeout;
+return function executedFunction(…args) {
+const later = () => {
+clearTimeout(timeout);
+func(…args);
+};
+clearTimeout(timeout);
+timeout = setTimeout(later, wait);
+};
+};
 
-  // Create debounced filter handler
-  const debouncedSetFilters = useCallback(
-    debounce((field, value) => {
-      setFilters((prev) => ({ ...prev, [field]: value }));
-    }, 300),
-    []
-  );
+// Create debounced filter handler
+const debouncedSetFilters = useCallback(
+debounce((field, value) => {
+setFilters((prev) => ({ …prev, [field]: value }));
+}, 300),
+[]
+);
 
-  // State for input values (separate from filters for debouncing)
-  const [inputValues, setInputValues] = useState({
-    name: '',
-    value: '',
-    description: '',
-    source: '',
-  });
+// State for input values (separate from filters for debouncing)
+const [inputValues, setInputValues] = useState({
+name: ‘’,
+value: ‘’,
+description: ‘’,
+source: ‘’,
+});
 
-  const handleFilterChange = (field, value) => {
-    // Update input immediately for responsive UI
-    setInputValues((prev) => ({ ...prev, [field]: value }));
-    // Debounce the actual filter update
-    debouncedSetFilters(field, value);
-    
-    // Update dropdown suggestions
-    if (value.trim()) {
-      const suggestions = uniqueValues[field].filter(item =>
-        item.toLowerCase().includes(value.toLowerCase())
-      ).slice(0, 10); // Limit to 10 suggestions
-      
-      setDropdownSuggestions(prev => ({
-        ...prev,
-        [field]: suggestions
-      }));
-      setActiveDropdown(field);
-    } else {
-      setActiveDropdown(null);
-    }
-  };
+const handleFilterChange = (field, value) => {
+// Update input immediately for responsive UI
+setInputValues((prev) => ({ …prev, [field]: value }));
+// Debounce the actual filter update
+debouncedSetFilters(field, value);
 
-  const handleSuggestionClick = (field, value) => {
-    setInputValues((prev) => ({ ...prev, [field]: value }));
-    setFilters((prev) => ({ ...prev, [field]: value }));
-    setActiveDropdown(null);
-  };
+```
+// Update dropdown suggestions
+if (value.trim()) {
+  const suggestions = uniqueValues[field].filter(item =>
+    item.toLowerCase().includes(value.toLowerCase())
+  ).slice(0, 10); // Limit to 10 suggestions
+  
+  setDropdownSuggestions(prev => ({
+    ...prev,
+    [field]: suggestions
+  }));
+  setActiveDropdown(field);
+} else {
+  setActiveDropdown(null);
+}
+```
 
-  const handleInputFocus = (field) => {
-    if (inputValues[field].trim()) {
-      const suggestions = uniqueValues[field].filter(item =>
-        item.toLowerCase().includes(inputValues[field].toLowerCase())
-      ).slice(0, 10);
-      
-      setDropdownSuggestions(prev => ({
-        ...prev,
-        [field]: suggestions
-      }));
-      setActiveDropdown(field);
-    }
-  };
+};
 
-  const toggleColumn = (column) => {
-    setVisibleColumns(prev => ({
-      ...prev,
-      [column]: !prev[column]
-    }));
-  };
+const handleSuggestionClick = (field, value) => {
+setInputValues((prev) => ({ …prev, [field]: value }));
+setFilters((prev) => ({ …prev, [field]: value }));
+setActiveDropdown(null);
+};
 
-  // Download functions
-  const downloadAsJSON = () => {
-    const visibleData = filteredData.map(row => {
-      const visibleRow = {};
-      Object.entries(visibleColumns).forEach(([key, isVisible]) => {
-        if (isVisible) {
-          visibleRow[columnLabels[key]] = row[key];
-        }
-      });
-      return visibleRow;
+const handleInputFocus = (field) => {
+if (inputValues[field].trim()) {
+const suggestions = uniqueValues[field].filter(item =>
+item.toLowerCase().includes(inputValues[field].toLowerCase())
+).slice(0, 10);
+
+```
+  setDropdownSuggestions(prev => ({
+    ...prev,
+    [field]: suggestions
+  }));
+  setActiveDropdown(field);
+}
+```
+
+};
+
+const toggleColumn = (column) => {
+setVisibleColumns(prev => ({
+…prev,
+[column]: !prev[column]
+}));
+};
+
+// Download functions
+const downloadAsJSON = () => {
+const visibleData = filteredData.map(row => {
+const visibleRow = {};
+Object.entries(visibleColumns).forEach(([key, isVisible]) => {
+if (isVisible) {
+visibleRow[columnLabels[key]] = row[key];
+}
+});
+return visibleRow;
+});
+
+```
+const jsonString = JSON.stringify(visibleData, null, 2);
+const blob = new Blob([jsonString], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.json`;
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+URL.revokeObjectURL(url);
+setShowDownloadMenu(false);
+```
+
+};
+
+const downloadAsCSV = () => {
+// Get visible column headers
+const headers = Object.entries(columnLabels)
+.filter(([key]) => visibleColumns[key])
+.map(([, label]) => label);
+
+```
+// Create CSV content
+let csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
+
+filteredData.forEach(row => {
+  const rowData = Object.keys(columnLabels)
+    .filter(key => visibleColumns[key])
+    .map(key => {
+      const value = row[key] || '';
+      // Escape quotes and wrap in quotes if contains comma, quote, or newline
+      const escaped = value.toString().replace(/"/g, '""');
+      return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
     });
+  csvContent += rowData.join(',') + '\n';
+});
 
-    const jsonString = JSON.stringify(visibleData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    setShowDownloadMenu(false);
-  };
+const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+const url = URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.csv`;
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+URL.revokeObjectURL(url);
+setShowDownloadMenu(false);
+```
 
-  const downloadAsCSV = () => {
-    // Get visible column headers
-    const headers = Object.entries(columnLabels)
-      .filter(([key]) => visibleColumns[key])
-      .map(([, label]) => label);
-    
-    // Create CSV content
-    let csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
-    
-    filteredData.forEach(row => {
-      const rowData = Object.keys(columnLabels)
-        .filter(key => visibleColumns[key])
-        .map(key => {
-          const value = row[key] || '';
-          // Escape quotes and wrap in quotes if contains comma, quote, or newline
-          const escaped = value.toString().replace(/"/g, '""');
-          return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
-        });
-      csvContent += rowData.join(',') + '\n';
-    });
+};
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    setShowDownloadMenu(false);
-  };
+const downloadAsExcel = () => {
+// Prepare data for Excel
+const excelData = filteredData.map(row => {
+const visibleRow = {};
+Object.entries(visibleColumns).forEach(([key, isVisible]) => {
+if (isVisible) {
+visibleRow[columnLabels[key]] = row[key];
+}
+});
+return visibleRow;
+});
 
-  const downloadAsExcel = () => {
-    // Prepare data for Excel
-    const excelData = filteredData.map(row => {
-      const visibleRow = {};
-      Object.entries(visibleColumns).forEach(([key, isVisible]) => {
-        if (isVisible) {
-          visibleRow[columnLabels[key]] = row[key];
-        }
-      });
-      return visibleRow;
-    });
+```
+// Create a new workbook
+const wb = XLSX.utils.book_new();
 
-    // Create a new workbook
-    const wb = XLSX.utils.book_new();
-    
-    // Convert data to worksheet
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    
-    // Set column widths (optional but makes it look better)
-    const columnWidths = Object.keys(columnLabels)
-      .filter(key => visibleColumns[key])
-      .map(key => ({
-        wch: Math.max(
-          columnLabels[key].length,
-          ...filteredData.map(row => (row[key] || '').toString().length).slice(0, 10)
-        ) + 2
-      }));
-    ws['!cols'] = columnWidths;
+// Convert data to worksheet
+const ws = XLSX.utils.json_to_sheet(excelData);
 
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Transaction Codes');
-    
-    // Generate Excel file and download
-    XLSX.writeFile(wb, `transaction_codes_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    setShowDownloadMenu(false);
-  };
+// Set column widths (optional but makes it look better)
+const columnWidths = Object.keys(columnLabels)
+  .filter(key => visibleColumns[key])
+  .map(key => ({
+    wch: Math.max(
+      columnLabels[key].length,
+      ...filteredData.map(row => (row[key] || '').toString().length).slice(0, 10)
+    ) + 2
+  }));
+ws['!cols'] = columnWidths;
 
-  // Click outside handler
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (activeDropdown && dropdownRefs.current[activeDropdown]) {
-        if (!dropdownRefs.current[activeDropdown].contains(event.target)) {
-          setActiveDropdown(null);
-        }
-      }
-      
-      if (showColumnToggle && columnToggleRef.current) {
-        if (!columnToggleRef.current.contains(event.target)) {
-          setShowColumnToggle(false);
-        }
-      }
-      
-      if (showDownloadMenu && downloadMenuRef.current) {
-        if (!downloadMenuRef.current.contains(event.target)) {
-          setShowDownloadMenu(false);
-        }
-      }
-    };
+// Add worksheet to workbook
+XLSX.utils.book_append_sheet(wb, ws, 'Transaction Codes');
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeDropdown, showColumnToggle, showDownloadMenu]);
+// Generate Excel file and download
+XLSX.writeFile(wb, `transaction_codes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+setShowDownloadMenu(false);
+```
 
-  // Generate page numbers to display
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxPagesToShow = 5;
-    
-    if (totalPages <= maxPagesToShow) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('...');
-        pages.push(currentPage - 1);
-        pages.push(currentPage);
-        pages.push(currentPage + 1);
-        pages.push('...');
-        pages.push(totalPages);
-      }
+};
+
+// Click outside handler
+useEffect(() => {
+const handleClickOutside = (event) => {
+if (activeDropdown && dropdownRefs.current[activeDropdown]) {
+if (!dropdownRefs.current[activeDropdown].contains(event.target)) {
+setActiveDropdown(null);
+}
+}
+
+```
+  if (showColumnToggle && columnToggleRef.current) {
+    if (!columnToggleRef.current.contains(event.target)) {
+      setShowColumnToggle(false);
     }
-    return pages;
-  };
+  }
+  
+  if (showDownloadMenu && downloadMenuRef.current) {
+    if (!downloadMenuRef.current.contains(event.target)) {
+      setShowDownloadMenu(false);
+    }
+  }
+};
 
-  return (
-    <div className="transaction-codes-container">
-      <div className="header-section">
-        <div className="title-section">
-          <h2>Transaction Codes</h2>
-          <p className="subtitle">Enterprise Catalog Business Term Definition: DEFINITION</p>
-        </div>
-        <div className="header-controls">
-          <div className="download-container" ref={downloadMenuRef}>
-            <button 
-              className="download-btn"
-              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-            >
-              <span className="download-icon">⬇</span> Download
-            </button>
-            {showDownloadMenu && (
-              <div className="download-dropdown">
-                <div className="dropdown-header">Export Format</div>
-                <button className="download-option" onClick={downloadAsExcel}>
-                  <span className="file-icon">📗</span> Download as Excel
-                </button>
-                <button className="download-option" onClick={downloadAsCSV}>
-                  <span className="file-icon">📊</span> Download as CSV
-                </button>
-                <button className="download-option" onClick={downloadAsJSON}>
-                  <span className="file-icon">📄</span> Download as JSON
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="column-toggle-container" ref={columnToggleRef}>
-            <button 
-              className="column-toggle-btn"
-              onClick={() => setShowColumnToggle(!showColumnToggle)}
-            >
-              <span className="toggle-icon">⚙️</span> Columns
-            </button>
-            {showColumnToggle && (
-              <div className="column-toggle-dropdown">
-                <div className="dropdown-header">Show/Hide Columns</div>
-                {Object.entries(columnLabels).map(([key, label]) => (
-                  <label key={key} className="column-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns[key]}
-                      onChange={() => toggleColumn(key)}
-                    />
-                    <span className="checkbox-label">{label}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+document.addEventListener('mousedown', handleClickOutside);
+return () => document.removeEventListener('mousedown', handleClickOutside);
+```
+
+}, [activeDropdown, showColumnToggle, showDownloadMenu]);
+
+// Generate page numbers to display
+const getPageNumbers = () => {
+const pages = [];
+const maxPagesToShow = 5;
+
+```
+if (totalPages <= maxPagesToShow) {
+  for (let i = 1; i <= totalPages; i++) {
+    pages.push(i);
+  }
+} else {
+  if (currentPage <= 3) {
+    for (let i = 1; i <= 4; i++) {
+      pages.push(i);
+    }
+    pages.push('...');
+    pages.push(totalPages);
+  } else if (currentPage >= totalPages - 2) {
+    pages.push(1);
+    pages.push('...');
+    for (let i = totalPages - 3; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    pages.push('...');
+    pages.push(currentPage - 1);
+    pages.push(currentPage);
+    pages.push(currentPage + 1);
+    pages.push('...');
+    pages.push(totalPages);
+  }
+}
+return pages;
+```
+
+};
+
+return (
+<div className="transaction-codes-container">
+<div className="header-section">
+<div className="title-section">
+<h2>Transaction Codes</h2>
+<p className="subtitle">Enterprise Catalog Business Term Definition: DEFINITION</p>
+</div>
+<div className="header-controls">
+<div className="download-container" ref={downloadMenuRef}>
+<button
+className=“download-btn”
+onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+>
+<span className="download-icon">⬇</span> Download
+</button>
+{showDownloadMenu && (
+<div className="download-dropdown">
+<div className="dropdown-header">Export Format</div>
+<button className="download-option" onClick={downloadAsExcel}>
+<span className="file-icon">📗</span> Download as Excel
+</button>
+<button className="download-option" onClick={downloadAsCSV}>
+<span className="file-icon">📊</span> Download as CSV
+</button>
+<button className="download-option" onClick={downloadAsJSON}>
+<span className="file-icon">📄</span> Download as JSON
+</button>
+</div>
+)}
+</div>
+<div className="column-toggle-container" ref={columnToggleRef}>
+<button
+className=“column-toggle-btn”
+onClick={() => setShowColumnToggle(!showColumnToggle)}
+>
+<span className="toggle-icon">⚙️</span> Columns
+</button>
+{showColumnToggle && (
+<div className="column-toggle-dropdown">
+<div className="dropdown-header">Show/Hide Columns</div>
+{Object.entries(columnLabels).map(([key, label]) => (
+<label key={key} className="column-checkbox">
+<input
+type=“checkbox”
+checked={visibleColumns[key]}
+onChange={() => toggleColumn(key)}
+/>
+<span className="checkbox-label">{label}</span>
+</label>
+))}
+</div>
+)}
+</div>
+</div>
+</div>
+
+```
+  <table className="table border table-striped" data-toggle="datatable">
+    <thead>
+      {/* Header Row */}
+      <tr>
+        {visibleColumns.name && <th scope="col">Field Name</th>}
+        {visibleColumns.value && <th scope="col">Field Value</th>}
+        {visibleColumns.description && <th scope="col">Field Description</th>}
+        {visibleColumns.source && <th scope="col">System Source Name</th>}
+      </tr>
+    </thead>
+    <tbody>
+      {/* Filter Input Row */}
+      <tr className="filter-row">
+        {visibleColumns.name && (
+          <td>
+            <div className="input-wrapper" ref={el => dropdownRefs.current.name = el}>
+              <input
+                type="text"
+                className="form-control filter-input"
+                value={inputValues.name}
+                onChange={(e) => handleFilterChange('name', e.target.value)}
+                onFocus={() => handleInputFocus('name')}
+                placeholder="Filter Name"
+                aria-label="Filter by Field Name"
+              />
+              {activeDropdown === 'name' && dropdownSuggestions.name.length > 0 && (
+                <div className="dropdown-suggestions">
+                  {dropdownSuggestions.name.map((suggestion, idx) => (
+                    <div
+                      key={idx}
+                      className="suggestion-item"
+                      onClick={() => handleSuggestionClick('name', suggestion)}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </td>
+        )}
+        {visibleColumns.value && (
+          <td>
+            <div className="input-wrapper" ref={el => dropdownRefs.current.value = el}>
+              <input
+                type="text"
+                className="form-control filter-input"
+                value={inputValues.value}
+                onChange={(e) => handleFilterChange('value', e.target.value)}
+                onFocus={() => handleInputFocus('value')}
+                placeholder="Filter Value"
+                aria-label="Filter by Field Value"
+              />
+              {activeDropdown === 'value' && dropdownSuggestions.value.length > 0 && (
+                <div className="dropdown-suggestions">
+                  {dropdownSuggestions.value.map((suggestion, idx) => (
+                    <div
+                      key={idx}
+                      className="suggestion-item"
+                      onClick={() => handleSuggestionClick('value', suggestion)}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </td>
+        )}
+        {visibleColumns.description && (
+          <td>
+            <div className="input-wrapper" ref={el => dropdownRefs.current.description = el}>
+              <input
+                type="text"
+                className="form-control filter-input"
+                value={inputValues.description}
+                onChange={(e) => handleFilterChange('description', e.target.value)}
+                onFocus={() => handleInputFocus('description')}
+                placeholder="Filter Description"
+                aria-label="Filter by Field Description"
+              />
+              {activeDropdown === 'description' && dropdownSuggestions.description.length > 0 && (
+                <div className="dropdown-suggestions">
+                  {dropdownSuggestions.description.map((suggestion, idx) => (
+                    <div
+                      key={idx}
+                      className="suggestion-item"
+                      onClick={() => handleSuggestionClick('description', suggestion)}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </td>
+        )}
+        {visibleColumns.source && (
+          <td>
+            <div className="input-wrapper" ref={el => dropdownRefs.current.source = el}>
+              <input
+                type="text"
+                className="form-control filter-input"
+                value={inputValues.source}
+                onChange={(e) => handleFilterChange('source', e.target.value)}
+                onFocus={() => handleInputFocus('source')}
+                placeholder="Filter Source"
+                aria-label="Filter by System Source Name"
+              />
+              {activeDropdown === 'source' && dropdownSuggestions.source.length > 0 && (
+                <div className="dropdown-suggestions">
+                  {dropdownSuggestions.source.map((suggestion, idx) => (
+                    <div
+                      key={idx}
+                      className="suggestion-item"
+                      onClick={() => handleSuggestionClick('source', suggestion)}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </td>
+        )}
+      </tr>
+      {currentData.map((row, idx) => (
+        <tr key={`trans-code-${startIndex + idx}`}>
+          {visibleColumns.name && <td>{row.name}</td>}
+          {visibleColumns.value && <td>{row.value}</td>}
+          {visibleColumns.description && <td>{row.description}</td>}
+          {visibleColumns.source && <td>{row.source}</td>}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  
+  {!filteredData.length && (
+    <div className="no-transactions-found">
+      No Transaction Codes To Be Displayed
+    </div>
+  )}
+  
+  {filteredData.length > 0 && (
+    <div className="pagination-container">
+      <div className="showing-info">
+        Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
       </div>
       
-      <table className="table border table-striped" data-toggle="datatable">
-        <thead>
-          {/* Header Row */}
-          <tr>
-            {visibleColumns.name && <th scope="col">Field Name</th>}
-            {visibleColumns.value && <th scope="col">Field Value</th>}
-            {visibleColumns.description && <th scope="col">Field Description</th>}
-            {visibleColumns.source && <th scope="col">System Source Name</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {/* Filter Input Row */}
-          <tr className="filter-row">
-            {visibleColumns.name && (
-              <td>
-                <div className="input-wrapper" ref={el => dropdownRefs.current.name = el}>
-                  <input
-                    type="text"
-                    className="form-control filter-input"
-                    value={inputValues.name}
-                    onChange={(e) => handleFilterChange('name', e.target.value)}
-                    onFocus={() => handleInputFocus('name')}
-                    placeholder="Filter Name"
-                    aria-label="Filter by Field Name"
-                  />
-                  {activeDropdown === 'name' && dropdownSuggestions.name.length > 0 && (
-                    <div className="dropdown-suggestions">
-                      {dropdownSuggestions.name.map((suggestion, idx) => (
-                        <div
-                          key={idx}
-                          className="suggestion-item"
-                          onClick={() => handleSuggestionClick('name', suggestion)}
-                        >
-                          {suggestion}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </td>
-            )}
-            {visibleColumns.value && (
-              <td>
-                <div className="input-wrapper" ref={el => dropdownRefs.current.value = el}>
-                  <input
-                    type="text"
-                    className="form-control filter-input"
-                    value={inputValues.value}
-                    onChange={(e) => handleFilterChange('value', e.target.value)}
-                    onFocus={() => handleInputFocus('value')}
-                    placeholder="Filter Value"
-                    aria-label="Filter by Field Value"
-                  />
-                  {activeDropdown === 'value' && dropdownSuggestions.value.length > 0 && (
-                    <div className="dropdown-suggestions">
-                      {dropdownSuggestions.value.map((suggestion, idx) => (
-                        <div
-                          key={idx}
-                          className="suggestion-item"
-                          onClick={() => handleSuggestionClick('value', suggestion)}
-                        >
-                          {suggestion}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </td>
-            )}
-            {visibleColumns.description && (
-              <td>
-                <div className="input-wrapper" ref={el => dropdownRefs.current.description = el}>
-                  <input
-                    type="text"
-                    className="form-control filter-input"
-                    value={inputValues.description}
-                    onChange={(e) => handleFilterChange('description', e.target.value)}
-                    onFocus={() => handleInputFocus('description')}
-                    placeholder="Filter Description"
-                    aria-label="Filter by Field Description"
-                  />
-                  {activeDropdown === 'description' && dropdownSuggestions.description.length > 0 && (
-                    <div className="dropdown-suggestions">
-                      {dropdownSuggestions.description.map((suggestion, idx) => (
-                        <div
-                          key={idx}
-                          className="suggestion-item"
-                          onClick={() => handleSuggestionClick('description', suggestion)}
-                        >
-                          {suggestion}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </td>
-            )}
-            {visibleColumns.source && (
-              <td>
-                <div className="input-wrapper" ref={el => dropdownRefs.current.source = el}>
-                  <input
-                    type="text"
-                    className="form-control filter-input"
-                    value={inputValues.source}
-                    onChange={(e) => handleFilterChange('source', e.target.value)}
-                    onFocus={() => handleInputFocus('source')}
-                    placeholder="Filter Source"
-                    aria-label="Filter by System Source Name"
-                  />
-                  {activeDropdown === 'source' && dropdownSuggestions.source.length > 0 && (
-                    <div className="dropdown-suggestions">
-                      {dropdownSuggestions.source.map((suggestion, idx) => (
-                        <div
-                          key={idx}
-                          className="suggestion-item"
-                          onClick={() => handleSuggestionClick('source', suggestion)}
-                        >
-                          {suggestion}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </td>
-            )}
-          </tr>
-          {currentData.map((row, idx) => (
-            <tr key={`trans-code-${startIndex + idx}`}>
-              {visibleColumns.name && <td>{row.name}</td>}
-              {visibleColumns.value && <td>{row.value}</td>}
-              {visibleColumns.description && <td>{row.description}</td>}
-              {visibleColumns.source && <td>{row.source}</td>}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      
-      {!filteredData.length && (
-        <div className="no-transactions-found">
-          No Transaction Codes To Be Displayed
-        </div>
-      )}
-      
-      {filteredData.length > 0 && (
-        <div className="pagination-container">
-          <div className="showing-info">
-            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
-          </div>
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button 
+            className="page-btn"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            First
+          </button>
+          <button 
+            className="page-btn"
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
           
-          {totalPages > 1 && (
-            <div className="pagination-controls">
-              <button 
-                className="page-btn"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
+          {getPageNumbers().map((page, index) => (
+            page === '...' ? (
+              <span key={`ellipsis-${index}`} className="page-ellipsis">...</span>
+            ) : (
+              <button
+                key={`page-${page}`}
+                className={`page-btn page-number ${currentPage === page ? 'active' : ''}`}
+                onClick={() => setCurrentPage(page)}
               >
-                First
+                {page}
               </button>
-              <button 
-                className="page-btn"
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-              
-              {getPageNumbers().map((page, index) => (
-                page === '...' ? (
-                  <span key={`ellipsis-${index}`} className="page-ellipsis">...</span>
-                ) : (
-                  <button
-                    key={`page-${page}`}
-                    className={`page-btn page-number ${currentPage === page ? 'active' : ''}`}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </button>
-                )
-              ))}
-              
-              <button 
-                className="page-btn"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
-              <button 
-                className="page-btn"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                Last
-              </button>
-            </div>
-          )}
+            )
+          ))}
+          
+          <button 
+            className="page-btn"
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+          <button 
+            className="page-btn"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            Last
+          </button>
         </div>
       )}
-      
-      <style jsx>{`
-        .transaction-codes-container {
-          padding: 20px;
-        }
-        
-        .header-section {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          margin-bottom: 20px;
-          padding-bottom: 10px;
-        }
-        
-        .title-section h2 {
-          margin: 0 0 5px 0;
-        }
-        
-        .subtitle {
-          margin: 0;
-          font-size: 14px;
-          color: #666;
-          font-style: italic;
-        }
-        
-        .header-controls {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-        }
-        
-        .download-container {
-          position: relative;
-        }
-        
-        .download-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .download-btn:hover {
-          background-color: #f8f9fa;
-          border-color: rgb(23, 41, 176);
-        }
-        
-        .download-icon {
-          font-size: 16px;
-        }
-        
-        .download-dropdown {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          margin-top: 5px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          z-index: 1001;
-          min-width: 180px;
-        }
-        
-        .download-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          width: 100%;
-          padding: 10px 15px;
-          background: none;
-          border: none;
-          font-size: 14px;
-          color: #333;
-          cursor: pointer;
-          text-align: left;
-          transition: background-color 0.2s;
-        }
-        
-        .download-option:hover {
-          background-color: #f8f9fa;
-        }
-        
-        .download-option:not(:last-child) {
-          border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .file-icon {
-          font-size: 16px;
-        }
-        
-        .column-toggle-container {
-          position: relative;
-        }
-        
-        .column-toggle-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .column-toggle-btn:hover {
-          background-color: #f8f9fa;
-          border-color: rgb(23, 41, 176);
-        }
-        
-        .toggle-icon {
-          font-size: 16px;
-        }
-        
-        .column-toggle-dropdown {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          margin-top: 5px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          z-index: 1001;
-          min-width: 200px;
-        }
-        
-        .dropdown-header {
-          padding: 10px 15px;
-          border-bottom: 1px solid #dee2e6;
-          font-weight: 600;
-          font-size: 14px;
-          color: #333;
-        }
-        
-        .column-checkbox {
-          display: flex;
-          align-items: center;
-          padding: 8px 15px;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        
-        .column-checkbox:hover {
-          background-color: #f8f9fa;
-        }
-        
-        .column-checkbox input[type="checkbox"] {
-          margin-right: 10px;
-          cursor: pointer;
-        }
-        
-        .checkbox-label {
-          font-size: 14px;
-          color: #333;
-          user-select: none;
-        }
-        
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          table-layout: auto;
-        }
-        
-        th, td {
-          padding: 10px 12px;
-          text-align: left;
-          vertical-align: middle;
-          border: 1px solid #dee2e6;
-        }
-        
-        th {
-          background-color: rgb(23, 41, 176);
-          color: white;
-          font-weight: 600;
-          font-size: 14px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        
-        td {
-          font-size: 14px;
-        }
-        
-        .filter-row td {
-          background-color: #f8f9fa;
-          padding: 6px;
-          border: 1px solid #dee2e6;
-          position: relative;
-        }
-        
-        .input-wrapper {
-          position: relative;
-          width: 100%;
-        }
-        
-        .filter-input {
-          width: 100%;
-          padding: 6px 10px;
-          border: 1px solid #ced4da;
-          border-radius: 3px;
-          font-size: 14px;
-          background-color: white;
-          box-sizing: border-box;
-          height: 32px;
-        }
-        
-        .filter-input:focus {
-          outline: none;
-          border-color: rgb(23, 41, 176);
-          box-shadow: 0 0 0 2px rgba(23, 41, 176, 0.1);
-        }
-        
-        .filter-input::placeholder {
-          color: #999;
-          opacity: 1;
-          font-size: 13px;
-        }
-        
-        .dropdown-suggestions {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background-color: white;
-          border: 1px solid #ced4da;
-          border-top: none;
-          border-radius: 0 0 3px 3px;
-          max-height: 200px;
-          overflow-y: auto;
-          z-index: 1000;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .suggestion-item {
-          padding: 8px 10px;
-          cursor: pointer;
-          font-size: 14px;
-          border-bottom: 1px solid #f0f0f0;
-          transition: background-color 0.2s;
-        }
-        
-        .suggestion-item:last-child {
-          border-bottom: none;
-        }
-        
-        .suggestion-item:hover {
-          background-color: #e8f4f8;
-        }
-        
-        tbody tr:hover:not(.filter-row) {
-          background-color: #f5f5f5;
-        }
-        
-        .no-transactions-found {
-          text-align: center;
-          padding: 40px 20px;
-          color: #666;
-          font-size: 16px;
-          background-color: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-top: none;
-        }
-        
-        .pagination-container {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 20px;
-          padding: 15px;
-          background-color: #f8f9fa;
-        }
-        
-        .showing-info {
-          font-size: 14px;
-          color: #666;
-        }
-        
-        .pagination-controls {
-          display: flex;
-          gap: 5px;
-          align-items: center;
-        }
-        
-        .page-btn {
-          padding: 6px 12px;
-          border: 1px solid #dee2e6;
-          background-color: white;
-          color: #333;
-          font-size: 14px;
-          cursor: pointer;
-          border-radius: 3px;
-          transition: all 0.2s;
-        }
-        
-        .page-btn:hover:not(:disabled) {
-          background-color: rgb(23, 41, 176);
-          color: white;
-          border-color: rgb(23, 41, 176);
-        }
-        
-        .page-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        
-        .page-btn.page-number {
-          min-width: 35px;
-        }
-        
-        .page-btn.active {
-          background-color: rgb(23, 41, 176);
-          color: white;
-          border-color: rgb(23, 41, 176);
-        }
-        
-        .page-ellipsis {
-          padding: 0 8px;
-          color: #666;
-        }
-      `}</style>
     </div>
-  );
+  )}
+  
+  <style jsx>{`
+    .transaction-codes-container {
+      padding: 20px;
+    }
+    
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+    }
+    
+    .title-section h2 {
+      margin: 0 0 5px 0;
+    }
+    
+    .subtitle {
+      margin: 0;
+      font-size: 14px;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .header-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .download-container {
+      position: relative;
+    }
+    
+    .download-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .download-btn:hover {
+      background-color: #f8f9fa;
+      border-color: rgb(23, 41, 176);
+    }
+    
+    .download-icon {
+      font-size: 16px;
+    }
+    
+    .download-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 5px;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+      min-width: 180px;
+    }
+    
+    .download-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 15px;
+      background: none;
+      border: none;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      text-align: left;
+      transition: background-color 0.2s;
+    }
+    
+    .download-option:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .download-option:not(:last-child) {
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .file-icon {
+      font-size: 16px;
+    }
+    
+    .column-toggle-container {
+      position: relative;
+    }
+    
+    .column-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .column-toggle-btn:hover {
+      background-color: #f8f9fa;
+      border-color: rgb(23, 41, 176);
+    }
+    
+    .toggle-icon {
+      font-size: 16px;
+    }
+    
+    .column-toggle-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 5px;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+      min-width: 200px;
+    }
+    
+    .dropdown-header {
+      padding: 10px 15px;
+      border-bottom: 1px solid #dee2e6;
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+    }
+    
+    .column-checkbox {
+      display: flex;
+      align-items: center;
+      padding: 8px 15px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .column-checkbox:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .column-checkbox input[type="checkbox"] {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    
+    .checkbox-label {
+      font-size: 14px;
+      color: #333;
+      user-select: none;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto;
+    }
+    
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: middle;
+      border: 1px solid #dee2e6;
+    }
+    
+    th {
+      background-color: rgb(23, 41, 176);
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    td {
+      font-size: 14px;
+    }
+    
+    .filter-row td {
+      background-color: #f8f9fa;
+      padding: 6px;
+      border: 1px solid #dee2e6;
+      position: relative;
+    }
+    
+    .input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    
+    .filter-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #ced4da;
+      border-radius: 3px;
+      font-size: 14px;
+      background-color: white;
+      box-sizing: border-box;
+      height: 32px;
+    }
+    
+    .filter-input:focus {
+      outline: none;
+      border-color: rgb(23, 41, 176);
+      box-shadow: 0 0 0 2px rgba(23, 41, 176, 0.1);
+    }
+    
+    .filter-input::placeholder {
+      color: #999;
+      opacity: 1;
+      font-size: 13px;
+    }
+    
+    .dropdown-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: white;
+      border: 1px solid #ced4da;
+      border-top: none;
+      border-radius: 0 0 3px 3px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .suggestion-item {
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s;
+    }
+    
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+    
+    .suggestion-item:hover {
+      background-color: #e8f4f8;
+    }
+    
+    tbody tr:hover:not(.filter-row) {
+      background-color: #f5f5f5;
+    }
+    
+    .no-transactions-found {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+      font-size: 16px;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-top: none;
+    }
+    
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+    }
+    
+    .showing-info {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .pagination-controls {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    
+    .page-btn {
+      padding: 6px 12px;
+      border: 1px solid #dee2e6;
+      background-color: white;
+      color: #333;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+    
+    .page-btn:hover:not(:disabled) {
+      background-color: rgb(23, 41, 176);
+      color: white;
+      border-color: rgb(23, 41, 176);
+    }
+    
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .page-btn.page-number {
+      min-width: 35px;
+    }
+    
+    .page-btn.active {
+      background-color: rgb(23, 41, 176);
+      color: white;
+      border-color: rgb(23, 41, 176);
+    }
+    
+    .page-ellipsis {
+      padding: 0 8px;
+      color: #666;
+    }: none;
+    }
+    
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+    }
+    
+    .showing-info {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .pagination-controls {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    
+    .page-btn {
+      padding: 6px 12px;
+      border: 1px solid #dee2e6;
+      background-color: white;
+      color: #333;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+    
+    .page-btn:hover:not(:disabled) {
+      background-color: rgb(23, 41, 176);
+      color: white;
+      border-color: rgb(23, 41, 176);
+    }
+    
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .page-btn.page-number {
+      min-width: 35px;
+    }
+    
+    .page-btn.active {
+      background-color: rgb(23, 41, 176);
+      color: white;
+      border-color: rgb(23, 41, 176);
+    }
+    
+    .page-ellipsis {
+      padding: 0 8px;
+      color: #666;
+    }
+  `}</style>
+</div>
+```
+
+);
 };
 
 export default TransactionCodes;
