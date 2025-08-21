@@ -76,27 +76,6 @@ const TransactionCodes = () => {
     })), []
   );
 
-  // Determine if we should show Globestar columns based on filtered data
-  const showGlobestarColumns = useMemo(() => {
-    // Check if any row in the filtered data is from Globestar
-    return filteredData.some(item => 
-      item.source.toLowerCase().includes('globestar')
-    );
-  }, [filteredData]);
-
-  // Get active column labels based on whether we have any Globestar data
-  const activeColumnLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
-
-  // Get unique values for each field for suggestions
-  const uniqueValues = useMemo(() => ({
-    name: [...new Set(transData.map(item => item.name))].filter(Boolean).sort(),
-    blockCode1: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode1))].filter(Boolean).sort(),
-    blockCode2: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode2))].filter(Boolean).sort(),
-    value: [...new Set(transData.map(item => item.value))].filter(Boolean).sort(),
-    description: [...new Set(transData.map(item => item.description))].filter(Boolean).sort(),
-    source: [...new Set(transData.map(item => item.source))].filter(Boolean).sort(),
-  }), [transData]);
-
   // Memoize filtered data with trimmed filter values
   const filteredData = useMemo(() => {
     let filtered = transData.filter((row) => {
@@ -121,6 +100,24 @@ const TransactionCodes = () => {
     
     return filtered;
   }, [transData, filters, sourceFilterMode]);
+
+  // Determine if we should show Globestar columns based on filtered data
+  const showGlobestarColumns = useMemo(() => {
+    // Check if any row in the filtered data is from Globestar
+    return filteredData.some(item => 
+      item.source.toLowerCase().includes('globestar')
+    );
+  }, [filteredData]);
+
+  // Get unique values for each field for suggestions
+  const uniqueValues = useMemo(() => ({
+    name: [...new Set(transData.map(item => item.name))].filter(Boolean).sort(),
+    blockCode1: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode1))].filter(Boolean).sort(),
+    blockCode2: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode2))].filter(Boolean).sort(),
+    value: [...new Set(transData.map(item => item.value))].filter(Boolean).sort(),
+    description: [...new Set(transData.map(item => item.description))].filter(Boolean).sort(),
+    source: [...new Set(transData.map(item => item.source))].filter(Boolean).sort(),
+  }), [transData]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
