@@ -64,6 +64,16 @@ const TransactionCodes = () => {
   // Refs for click outside detection
   const dropdownRefs = useRef({});
 
+  // State for input values (separate from filters for debouncing)
+  const [inputValues, setInputValues] = useState({
+    name: '',
+    blockCode1: '',
+    blockCode2: '',
+    value: '',
+    description: '',
+    source: '',
+  });
+
   // Memoize the transformed data to avoid recreation on every render
   const transData = useMemo(() => 
     transactionData.Triumph_Trans_Codes.map((item) => ({
@@ -75,6 +85,16 @@ const TransactionCodes = () => {
       source: item['System Source Name'] || '',
     })), []
   );
+
+  // Get unique values for each field for suggestions
+  const uniqueValues = useMemo(() => ({
+    name: [...new Set(transData.map(item => item.name))].filter(Boolean).sort(),
+    blockCode1: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode1))].filter(Boolean).sort(),
+    blockCode2: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode2))].filter(Boolean).sort(),
+    value: [...new Set(transData.map(item => item.value))].filter(Boolean).sort(),
+    description: [...new Set(transData.map(item => item.description))].filter(Boolean).sort(),
+    source: [...new Set(transData.map(item => item.source))].filter(Boolean).sort(),
+  }), [transData]);
 
   // Memoize filtered data with trimmed filter values
   const filteredData = useMemo(() => {
@@ -109,15 +129,8 @@ const TransactionCodes = () => {
     );
   }, [filteredData]);
 
-  // Get unique values for each field for suggestions
-  const uniqueValues = useMemo(() => ({
-    name: [...new Set(transData.map(item => item.name))].filter(Boolean).sort(),
-    blockCode1: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode1))].filter(Boolean).sort(),
-    blockCode2: [...new Set(transData.filter(item => item.source.toLowerCase().includes('globestar')).map(item => item.blockCode2))].filter(Boolean).sort(),
-    value: [...new Set(transData.map(item => item.value))].filter(Boolean).sort(),
-    description: [...new Set(transData.map(item => item.description))].filter(Boolean).sort(),
-    source: [...new Set(transData.map(item => item.source))].filter(Boolean).sort(),
-  }), [transData]);
+  // Get active column labels based on whether we have any Globestar data
+  const activeColumnLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -126,7 +139,7 @@ const TransactionCodes = () => {
   const currentData = filteredData.slice(startIndex, endIndex);
 
   // Reset to page 1 when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [filters, sourceFilterMode]);
 
@@ -150,16 +163,6 @@ const TransactionCodes = () => {
     }, 300),
     []
   );
-
-  // State for input values (separate from filters for debouncing)
-  const [inputValues, setInputValues] = useState({
-    name: '',
-    blockCode1: '',
-    blockCode2: '',
-    value: '',
-    description: '',
-    source: '',
-  });
 
   const handleFilterChange = (field, value) => {
     // Update input immediately for responsive UI
@@ -396,6 +399,8 @@ const TransactionCodes = () => {
       return null;
     }
 
+    const currentLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
+
     return (
       <td key={field}>
         <div className="input-wrapper" ref={el => dropdownRefs.current[field] = el}>
@@ -406,7 +411,7 @@ const TransactionCodes = () => {
             onChange={(e) => handleFilterChange(field, e.target.value)}
             onFocus={() => handleInputFocus(field)}
             placeholder={placeholder}
-            aria-label={`Filter by ${activeColumnLabels[field]}`}
+            aria-label={`Filter by ${currentLabels[field] || field}`}
           />
           {activeDropdown === field && dropdownSuggestions[field].length > 0 && (
             <div className="dropdown-suggestions">
@@ -848,7 +853,6 @@ const TransactionCodes = () => {
           color: #999;
           opacity: 1;
           font-size: 13px;
-        }
         
         .dropdown-suggestions {
           position: absolute;
