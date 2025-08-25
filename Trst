@@ -74,6 +74,11 @@ description: ‘’,
 source: ‘’,
 });
 
+// Sync input values with filters when filters change from suggestion click
+useEffect(() => {
+setInputValues(filters);
+}, [filters]);
+
 // Memoize the transformed data to avoid recreation on every render
 const transData = useMemo(() =>
 transactionData.Triumph_Trans_Codes.map((item) => ({
@@ -98,38 +103,50 @@ source: […new Set(transData.map(item => item.source))].filter(Boolean).sort(),
 
 // Memoize filtered data with trimmed filter values
 const filteredData = useMemo(() => {
-let filtered = transData.filter((row) => {
-// Apply source filter mode first
-if (sourceFilterMode === ‘globestar’ && !row.source.toLowerCase().includes(‘globestar’)) {
-return false;
-}
-if (sourceFilterMode === ‘non-globestar’ && row.source.toLowerCase().includes(‘globestar’)) {
-return false;
-}
+console.log(‘Current filters:’, filters);
+console.log(‘Source filter mode:’, sourceFilterMode);
 
 ```
+let filtered = transData.filter((row) => {
+  // Apply source filter mode first
+  if (sourceFilterMode === 'globestar' && !row.source.toLowerCase().includes('globestar')) {
+    return false;
+  }
+  if (sourceFilterMode === 'non-globestar' && row.source.toLowerCase().includes('globestar')) {
+    return false;
+  }
+
   // Then apply regular filters
-  return Object.entries(filters).every(([key, val]) => {
+  const passesFilters = Object.entries(filters).every(([key, val]) => {
     // If there's no filter value, pass
-    if (!val.trim()) return true;
+    if (!val || val === '') return true;
+    
+    const filterValue = val.trim().toLowerCase();
+    if (filterValue === '') return true;
     
     // For block code filters:
-    // - If the row is Globestar, apply the filter normally
-    // - If the row is not Globestar, pass (since non-Globestar rows don't have block codes)
-    if ((key === 'blockCode1' || key === 'blockCode2')) {
-      if (!row.source.toLowerCase().includes('globestar')) {
-        // Non-Globestar rows automatically pass block code filters
+    if (key === 'blockCode1' || key === 'blockCode2') {
+      const isGlobestarRow = row.source.toLowerCase().includes('globestar');
+      
+      if (!isGlobestarRow) {
+        // Non-Globestar rows don't have block codes, so they pass
         return true;
       }
-      // For Globestar rows, apply the filter
-      return row[key].toLowerCase().includes(val.trim().toLowerCase());
+      
+      // For Globestar rows, check if they have this block code field and if it matches
+      const rowValue = (row[key] || '').toLowerCase();
+      return rowValue.includes(filterValue);
     }
     
     // For all other fields, apply filter normally
-    return row[key].toLowerCase().includes(val.trim().toLowerCase());
+    const rowValue = (row[key] || '').toLowerCase();
+    return rowValue.includes(filterValue);
   });
+  
+  return passesFilters;
 });
 
+console.log('Filtered data length:', filtered.length);
 return filtered;
 ```
 
@@ -204,13 +221,14 @@ if (value.trim()) {
 };
 
 const handleSuggestionClick = (field, value) => {
+// Update both input values and filters immediately
 setInputValues((prev) => ({ …prev, [field]: value }));
 setFilters((prev) => ({ …prev, [field]: value }));
 setActiveDropdown(null);
 };
 
 const handleInputFocus = (field) => {
-if (inputValues[field].trim()) {
+if (inputValues[field] && inputValues[field].trim()) {
 const suggestions = uniqueValues[field].filter(item =>
 item.toLowerCase().includes(inputValues[field].toLowerCase())
 ).slice(0, 10);
