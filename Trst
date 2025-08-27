@@ -21,7 +21,7 @@ const TransactionCodes = () => {
     name: true,
     blockCode1: true,
     blockCode2: true,
-    marketLocation: true, // Always available by default
+    marketLocation: true, // always available by default
     value: true,
     description: true,
     source: true,
@@ -36,12 +36,12 @@ const TransactionCodes = () => {
   // 'all' | 'globestar' | 'non-globestar'
   const [sourceFilterMode, setSourceFilterMode] = useState('all');
 
-  // Labels (order matters → iteration preserves insertion order)
+  // Labels (desired render/export order)
   const columnLabelsGlobestar = {
     name: 'Field Name',
     blockCode1: 'Block Code 1',
     blockCode2: 'Block Code 2',
-    marketLocation: 'Market Location', // ← always before Field Value
+    marketLocation: 'Market Location',
     value: 'Field Value',
     description: 'Field Description',
     source: 'System Source Name',
@@ -49,7 +49,7 @@ const TransactionCodes = () => {
 
   const columnLabelsStandard = {
     name: 'Field Name',
-    marketLocation: 'Market Location', // ← always before Field Value
+    marketLocation: 'Market Location',
     value: 'Field Value',
     description: 'Field Description',
     source: 'System Source Name',
@@ -79,14 +79,14 @@ const TransactionCodes = () => {
     source: '',
   });
 
-  // Transform data once
+  // Transform data once (keep old format: Market Location comes from JSON)
   const transData = useMemo(
     () =>
       transactionData.Triumph_Trans_Codes.map((item) => ({
         name: item['Field Name'] || '',
         blockCode1: item['Block Code 1'] || '',
         blockCode2: item['Block Code 2'] || '',
-        marketLocation: item['Market Location'] || '', // ← new field
+        marketLocation: item['Market Location'] || '',
         value: item['Field Value'] || '',
         description: item['Field Description'] || '',
         source: item['System Source Name'] || '',
@@ -97,12 +97,12 @@ const TransactionCodes = () => {
   // Unique values for suggestions
   const uniqueValues = useMemo(
     () => ({
-      name: [...new Set(transData.map((item) => item.name))].filter(Boolean).sort(),
+      name: [...new Set(transData.map((i) => i.name))].filter(Boolean).sort(),
       blockCode1: [
         ...new Set(
           transData
-            .filter((item) => (item.source || '').toLowerCase().includes('globestar'))
-            .map((item) => item.blockCode1)
+            .filter((i) => (i.source || '').toLowerCase().includes('globestar'))
+            .map((i) => i.blockCode1)
         ),
       ]
         .filter(Boolean)
@@ -110,23 +110,23 @@ const TransactionCodes = () => {
       blockCode2: [
         ...new Set(
           transData
-            .filter((item) => (item.source || '').toLowerCase().includes('globestar'))
-            .map((item) => item.blockCode2)
+            .filter((i) => (i.source || '').toLowerCase().includes('globestar'))
+            .map((i) => i.blockCode2)
         ),
       ]
         .filter(Boolean)
         .sort(),
-      marketLocation: [...new Set(transData.map((item) => item.marketLocation))].filter(Boolean).sort(),
-      value: [...new Set(transData.map((item) => item.value))].filter(Boolean).sort(),
-      description: [...new Set(transData.map((item) => item.description))].filter(Boolean).sort(),
-      source: [...new Set(transData.map((item) => item.source))].filter(Boolean).sort(),
+      marketLocation: [...new Set(transData.map((i) => i.marketLocation))].filter(Boolean).sort(),
+      value: [...new Set(transData.map((i) => i.value))].filter(Boolean).sort(),
+      description: [...new Set(transData.map((i) => i.description))].filter(Boolean).sort(),
+      source: [...new Set(transData.map((i) => i.source))].filter(Boolean).sort(),
     }),
     [transData]
   );
 
   // Apply filters
   const filteredData = useMemo(() => {
-    const filtered = transData.filter((row) => {
+    return transData.filter((row) => {
       const isGlobestar = (row.source || '').toLowerCase().includes('globestar');
 
       // Source mode first
@@ -139,28 +139,26 @@ const TransactionCodes = () => {
         return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
       });
     });
-
-    return filtered;
   }, [transData, filters, sourceFilterMode]);
 
-  // ---- Sticky Globestar columns logic (with Non-Globestar priority) ----
+  // ---- Sticky Globestar columns logic (Non-Globestar has priority) ----
   const hasGlobestarInDataset = useMemo(
-    () => transData.some((item) => (item.source || '').toLowerCase().includes('globestar')),
+    () => transData.some((i) => (i.source || '').toLowerCase().includes('globestar')),
     [transData]
   );
 
   const showGlobestarColumns = useMemo(() => {
-    // Highest priority: Non-Globestar must HIDE Block Code columns
+    // Force-hide in non-globestar mode
     if (sourceFilterMode === 'non-globestar') return false;
 
-    // Next: Globestar Only must SHOW Block Code columns
+    // Force-show in globestar mode
     if (sourceFilterMode === 'globestar') return true;
 
-    // Otherwise, sticky behavior
+    // Sticky: keep if user is interacting or filtered data has any
     if ((inputValues.blockCode1 || '').trim() || (inputValues.blockCode2 || '').trim()) return true;
-    if (filteredData.some((item) => (item.source || '').toLowerCase().includes('globestar'))) return true;
+    if (filteredData.some((i) => (i.source || '').toLowerCase().includes('globestar'))) return true;
 
-    // Or keep available if dataset contains any Globestar rows (optional)
+    // Optional: show if dataset has any
     return hasGlobestarInDataset;
   }, [
     sourceFilterMode,
@@ -170,11 +168,11 @@ const TransactionCodes = () => {
     hasGlobestarInDataset,
   ]);
 
-  // When switching to Non-Globestar, clear block-code filters/inputs
+  // Clear block-code filters when switching to Non-Globestar
   useEffect(() => {
     if (sourceFilterMode === 'non-globestar') {
-      setFilters((prev) => ({ ...prev, blockCode1: '', blockCode2: '' }));
-      setInputValues((prev) => ({ ...prev, blockCode1: '', blockCode2: '' }));
+      setFilters((p) => ({ ...p, blockCode1: '', blockCode2: '' }));
+      setInputValues((p) => ({ ...p, blockCode1: '', blockCode2: '' }));
       setActiveDropdown(null);
     }
   }, [sourceFilterMode]);
@@ -223,10 +221,7 @@ const TransactionCodes = () => {
         .filter((item) => item.toLowerCase().includes(value.toLowerCase()))
         .slice(0, 10);
 
-      setDropdownSuggestions((prev) => ({
-        ...prev,
-        [field]: suggestions,
-      }));
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
       setActiveDropdown(field);
     } else {
       setActiveDropdown(null);
@@ -245,19 +240,13 @@ const TransactionCodes = () => {
         .filter((item) => item.toLowerCase().includes(inputValues[field].toLowerCase()))
         .slice(0, 10);
 
-      setDropdownSuggestions((prev) => ({
-        ...prev,
-        [field]: suggestions,
-      }));
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
       setActiveDropdown(field);
     }
   };
 
   const toggleColumn = (column) => {
-    setVisibleColumns((prev) => ({
-      ...prev,
-      [column]: !prev[column],
-    }));
+    setVisibleColumns((prev) => ({ ...prev, [column]: !prev[column] }));
   };
 
   // Downloads
@@ -327,4 +316,406 @@ const TransactionCodes = () => {
       const visibleRow = {};
       const isGlobestar = (row.source || '').toLowerCase().includes('globestar');
 
-     
+      Object.entries(activeColumnLabels).forEach(([key, label]) => {
+        if (!visibleColumns[key]) return;
+        if (key === 'blockCode1' || key === 'blockCode2') {
+          visibleRow[label] = isGlobestar ? row[key] || '' : '';
+        } else {
+          visibleRow[label] = row[key] || '';
+        }
+      });
+
+      return visibleRow;
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    const columnWidths = Object.entries(activeColumnLabels)
+      .filter(([key]) => visibleColumns[key])
+      .map(([key, label]) => ({
+        wch:
+          Math.max(
+            label.length,
+            ...filteredData
+              .map((row) => {
+                if ((key === 'blockCode1' || key === 'blockCode2') && !(row.source || '').toLowerCase().includes('globestar')) {
+                  return 0;
+                }
+                return (row[key] || '').toString().length;
+              })
+              .slice(0, 10)
+          ) + 2,
+      }));
+
+    ws['!cols'] = columnWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Transaction Codes');
+    XLSX.writeFile(wb, `transaction_codes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    setShowDownloadMenu(false);
+  };
+
+  // Click outside handlers
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeDropdown && dropdownRefs.current[activeDropdown]) {
+        if (!dropdownRefs.current[activeDropdown].contains(event.target)) setActiveDropdown(null);
+      }
+      if (showColumnToggle && columnToggleRef.current && !columnToggleRef.current.contains(event.target)) {
+        setShowColumnToggle(false);
+      }
+      if (showDownloadMenu && downloadMenuRef.current && !downloadMenuRef.current.contains(event.target)) {
+        setShowDownloadMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown, showColumnToggle, showDownloadMenu]);
+
+  // Page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
+  const renderFilterInput = (field, placeholder) => {
+    // Hide block-code inputs only when showGlobestarColumns=false (which includes Non-Globestar)
+    if (!showGlobestarColumns && (field === 'blockCode1' || field === 'blockCode2')) return null;
+
+    const currentLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
+
+    return (
+      <td key={field}>
+        <div className="input-wrapper" ref={(el) => (dropdownRefs.current[field] = el)}>
+          <input
+            type="text"
+            className="form-control filter-input"
+            value={inputValues[field]}
+            onChange={(e) => handleFilterChange(field, e.target.value)}
+            onFocus={() => handleInputFocus(field)}
+            placeholder={placeholder}
+            aria-label={`Filter by ${currentLabels[field] || field}`}
+          />
+          {activeDropdown === field && dropdownSuggestions[field].length > 0 && (
+            <div className="dropdown-suggestions">
+              {dropdownSuggestions[field].map((suggestion, idx) => (
+                <div key={idx} className="suggestion-item" onClick={() => handleSuggestionClick(field, suggestion)}>
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </td>
+    );
+  };
+
+  return (
+    <div className="transaction-codes-container">
+      <div className="header-section">
+        <div className="title-section">
+          <h2>Transaction Codes</h2>
+          <p className="subtitle">Enterprise Catalog Business Term Definition: DEFINITION</p>
+        </div>
+
+        <div className="header-controls">
+          <select
+            className="source-filter"
+            value={sourceFilterMode}
+            onChange={(e) => setSourceFilterMode(e.target.value)}
+          >
+            <option value="all">All Sources</option>
+            <option value="globestar">Globestar Only</option>
+            <option value="non-globestar">Non-Globestar</option>
+          </select>
+
+          <div className="download-container" ref={downloadMenuRef}>
+            <button className="download-btn" onClick={() => setShowDownloadMenu(!showDownloadMenu)}>
+              <span className="download-icon">⬇</span> Download
+            </button>
+            {showDownloadMenu && (
+              <div className="download-dropdown">
+                <div className="dropdown-header">Export Format</div>
+                <button className="download-option" onClick={downloadAsExcel}>
+                  <span className="file-icon">📗</span> Download as Excel
+                </button>
+                <button className="download-option" onClick={downloadAsCSV}>
+                  <span className="file-icon">📊</span> Download as CSV
+                </button>
+                <button className="download-option" onClick={downloadAsJSON}>
+                  <span className="file-icon">📄</span> Download as JSON
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="column-toggle-container" ref={columnToggleRef}>
+            <button className="column-toggle-btn" onClick={() => setShowColumnToggle(!showColumnToggle)}>
+              <span className="toggle-icon">⚙️</span> Columns
+            </button>
+            {showColumnToggle && (
+              <div className="column-toggle-dropdown">
+                <div className="dropdown-header">Show/Hide Columns</div>
+                {Object.entries(activeColumnLabels).map(([key, label]) => {
+                  if (!showGlobestarColumns && (key === 'blockCode1' || key === 'blockCode2')) return null;
+                  return (
+                    <label key={key} className="column-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={!!visibleColumns[key]}
+                        onChange={() => toggleColumn(key)}
+                      />
+                      <span className="checkbox-label">{label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <table className="table border table-striped" data-toggle="datatable">
+        <thead>
+          <tr>
+            {visibleColumns.name && <th scope="col">Field Name</th>}
+            {showGlobestarColumns && visibleColumns.blockCode1 && <th scope="col">Block Code 1</th>}
+            {showGlobestarColumns && visibleColumns.blockCode2 && <th scope="col">Block Code 2</th>}
+            {visibleColumns.marketLocation && <th scope="col">Market Location</th>}
+            {visibleColumns.value && <th scope="col">Field Value</th>}
+            {visibleColumns.description && <th scope="col">Field Description</th>}
+            {visibleColumns.source && <th scope="col">System Source Name</th>}
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="filter-row">
+            {visibleColumns.name && renderFilterInput('name', 'Filter Name')}
+            {showGlobestarColumns && visibleColumns.blockCode1 && renderFilterInput('blockCode1', 'Filter Block 1')}
+            {showGlobestarColumns && visibleColumns.blockCode2 && renderFilterInput('blockCode2', 'Filter Block 2')}
+            {visibleColumns.marketLocation && renderFilterInput('marketLocation', 'Filter Market Location')}
+            {visibleColumns.value && renderFilterInput('value', 'Filter Value')}
+            {visibleColumns.description && renderFilterInput('description', 'Filter Description')}
+            {visibleColumns.source && renderFilterInput('source', 'Filter Source')}
+          </tr>
+
+          {currentData.map((row, idx) => {
+            const isGlobestarRow = (row.source || '').toLowerCase().includes('globestar');
+            return (
+              <tr key={`trans-code-${startIndex + idx}`}>
+                {visibleColumns.name && <td>{row.name}</td>}
+                {showGlobestarColumns && visibleColumns.blockCode1 && (
+                  <td style={{ backgroundColor: !isGlobestarRow ? '#f9f9f9' : 'inherit' }}>
+                    {isGlobestarRow ? row.blockCode1 : '-'}
+                  </td>
+                )}
+                {showGlobestarColumns && visibleColumns.blockCode2 && (
+                  <td style={{ backgroundColor: !isGlobestarRow ? '#f9f9f9' : 'inherit' }}>
+                    {isGlobestarRow ? row.blockCode2 : '-'}
+                  </td>
+                )}
+                {visibleColumns.marketLocation && <td>{row.marketLocation}</td>}
+                {visibleColumns.value && <td>{row.value}</td>}
+                {visibleColumns.description && <td>{row.description}</td>}
+                {visibleColumns.source && <td>{row.source}</td>}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {!filteredData.length && <div className="no-transactions-found">No Transaction Codes To Be Displayed</div>}
+
+      {filteredData.length > 0 && (
+        <div className="pagination-container">
+          <div className="showing-info">
+            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <button className="page-btn" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
+                First
+              </button>
+              <button
+                className="page-btn"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+
+              {getPageNumbers().map((page, index) =>
+                page === '...' ? (
+                  <span key={`ellipsis-${index}`} className="page-ellipsis">...</span>
+                ) : (
+                  <button
+                    key={`page-${page}`}
+                    className={`page-btn page-number ${currentPage === page ? 'active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              <button
+                className="page-btn"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              <button className="page-btn" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
+                Last
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <style>{`
+        .transaction-codes-container { padding: 20px; }
+        .header-section {
+          display: flex; justify-content: space-between; align-items: flex-end;
+          margin-bottom: 20px; padding-bottom: 10px;
+        }
+        .title-section h2 { margin: 0 0 5px 0; }
+        .subtitle { margin: 0; font-size: 14px; color: #666; font-style: italic; }
+        .header-controls { display: flex; gap: 10px; align-items: center; }
+
+        .source-filter {
+          padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px;
+          font-size: 14px; background-color: white; cursor: pointer; transition: all 0.2s;
+        }
+        .source-filter:hover { border-color: rgb(23, 41, 176); }
+        .source-filter:focus {
+          outline: none; border-color: rgb(23, 41, 176);
+          box-shadow: 0 0 0 2px rgba(23, 41, 176, 0.1);
+        }
+
+        .download-container { position: relative; }
+        .download-btn {
+          display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+          background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
+          font-size: 14px; cursor: pointer; transition: all 0.2s;
+        }
+        .download-btn:hover { background-color: #f8f9fa; border-color: rgb(23, 41, 176); }
+        .download-icon { font-size: 16px; }
+
+        .download-dropdown {
+          position: absolute; top: 100%; right: 0; margin-top: 5px;
+          background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 1001; min-width: 180px;
+        }
+        .download-option {
+          display: flex; align-items: center; gap: 8px; width: 100%;
+          padding: 10px 15px; background: none; border: none; font-size: 14px;
+          color: #333; cursor: pointer; text-align: left; transition: background-color 0.2s;
+        }
+        .download-option:hover { background-color: #f8f9fa; }
+        .download-option:not(:last-child) { border-bottom: 1px solid #f0f0f0; }
+        .file-icon { font-size: 16px; }
+
+        .column-toggle-container { position: relative; }
+        .column-toggle-btn {
+          display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+          background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
+          font-size: 14px; cursor: pointer; transition: all 0.2s;
+        }
+        .column-toggle-btn:hover { background-color: #f8f9fa; border-color: rgb(23, 41, 176); }
+        .toggle-icon { font-size: 16px; }
+
+        .column-toggle-dropdown {
+          position: absolute; top: 100%; right: 0; margin-top: 5px;
+          background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 1001; min-width: 200px;
+        }
+        .dropdown-header {
+          padding: 10px 15px; border-bottom: 1px solid #dee2e6;
+          font-weight: 600; font-size: 14px; color: #333;
+        }
+        .column-checkbox {
+          display: flex; align-items: center; padding: 8px 15px; cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        .column-checkbox:hover { background-color: #f8f9fa; }
+        .column-checkbox input[type="checkbox"] { margin-right: 10px; cursor: pointer; }
+        .checkbox-label { font-size: 14px; color: #333; user-select: none; }
+
+        table { width: 100%; border-collapse: collapse; table-layout: auto; }
+        th, td { padding: 10px 12px; text-align: left; vertical-align: middle; border: 1px solid #dee2e6; }
+        th {
+          background-color: rgb(23, 41, 176); color: white; font-weight: 600;
+          font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        td { font-size: 14px; }
+
+        .filter-row td {
+          background-color: #f8f9fa; padding: 6px; border: 1px solid #dee2e6; position: relative;
+        }
+
+        .input-wrapper { position: relative; width: 100%; }
+        .filter-input {
+          width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 3px;
+          font-size: 14px; background-color: white; box-sizing: border-box; height: 32px;
+        }
+        .filter-input:focus {
+          outline: none; border-color: rgb(23, 41, 176);
+          box-shadow: 0 0 0 2px rgba(23, 41, 176, 0.1);
+        }
+        .filter-input::placeholder { color: #999; opacity: 1; font-size: 13px; }
+
+        .dropdown-suggestions {
+          position: absolute; top: 100%; left: 0; right: 0;
+          background-color: #fff; border: 1px solid #dee2e6; border-top: none;
+          max-height: 220px; overflow-y: auto; z-index: 1002;
+        }
+        .suggestion-item { padding: 8px 10px; cursor: pointer; font-size: 14px; }
+        .suggestion-item:hover { background-color: #f1f3f5; }
+
+        .no-transactions-found { margin-top: 12px; color: #666; font-style: italic; }
+
+        .pagination-container {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-top: 12px; flex-wrap: wrap; gap: 10px;
+        }
+        .pagination-controls { display: flex; gap: 6px; align-items: center; }
+        .page-btn {
+          padding: 6px 10px; border: 1px solid #dee2e6; background: #fff;
+          border-radius: 4px; cursor: pointer; font-size: 13px;
+        }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .page-number.active {
+          background: rgb(23, 41, 176); color: #fff; border-color: rgb(23, 41, 176);
+        }
+        .page-ellipsis { padding: 0 6px; color: #777; }
+      `}</style>
+    </div>
+  );
+};
+
+export default TransactionCodes;
