@@ -27,6 +27,7 @@ const TransactionCodes = () => {
 
   const [showColumnToggle, setShowColumnToggle] = useState(false);
   const columnToggleRef = useRef(null);
+
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const downloadMenuRef = useRef(null);
 
@@ -116,13 +117,14 @@ const TransactionCodes = () => {
 
   // Apply filters
   const filteredData = useMemo(() => {
-    let filtered = transData.filter((row) => {
-      // Source mode first
+    const filtered = transData.filter((row) => {
       const isGlobestar = (row.source || '').toLowerCase().includes('globestar');
+
+      // Source mode first
       if (sourceFilterMode === 'globestar' && !isGlobestar) return false;
       if (sourceFilterMode === 'non-globestar' && isGlobestar) return false;
 
-      // Other filters
+      // Field-by-field filters
       return Object.entries(filters).every(([key, val]) => {
         if (!val || !val.trim()) return true;
         return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
@@ -132,11 +134,30 @@ const TransactionCodes = () => {
     return filtered;
   }, [transData, filters, sourceFilterMode]);
 
-  // Show Globestar columns?
-  const showGlobestarColumns = useMemo(
-    () => filteredData.some((item) => (item.source || '').toLowerCase().includes('globestar')),
-    [filteredData]
+  // ---- Sticky Globestar columns logic ----
+  const hasGlobestarInDataset = useMemo(
+    () => transData.some((item) => (item.source || '').toLowerCase().includes('globestar')),
+    [transData]
   );
+
+  // Keep Block Code columns visible if:
+  // - user selected Globestar Only, OR
+  // - user is typing in block-code inputs, OR
+  // - filtered data contains a Globestar row, OR
+  // - dataset has any Globestar at all (optional, keeps columns generally available)
+  const showGlobestarColumns = useMemo(() => {
+    if (sourceFilterMode === 'globestar') return true;
+    if ((inputValues.blockCode1 || '').trim() || (inputValues.blockCode2 || '').trim()) return true;
+    if (filteredData.some((item) => (item.source || '').toLowerCase().includes('globestar'))) return true;
+    return hasGlobestarInDataset;
+  }, [
+    sourceFilterMode,
+    inputValues.blockCode1,
+    inputValues.blockCode2,
+    filteredData,
+    hasGlobestarInDataset,
+  ]);
+  // ----------------------------------------
 
   const activeColumnLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
 
@@ -328,15 +349,11 @@ const TransactionCodes = () => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (activeDropdown && dropdownRefs.current[activeDropdown]) {
-        if (!dropdownRefs.current[activeDropdown].contains(event.target)) {
-          setActiveDropdown(null);
-        }
+        if (!dropdownRefs.current[activeDropdown].contains(event.target)) setActiveDropdown(null);
       }
-
       if (showColumnToggle && columnToggleRef.current && !columnToggleRef.current.contains(event.target)) {
         setShowColumnToggle(false);
       }
-
       if (showDownloadMenu && downloadMenuRef.current && !downloadMenuRef.current.contains(event.target)) {
         setShowDownloadMenu(false);
       }
@@ -376,6 +393,7 @@ const TransactionCodes = () => {
   };
 
   const renderFilterInput = (field, placeholder) => {
+    // Keep block code inputs visible when showGlobestarColumns is true (sticky logic handles it)
     if (!showGlobestarColumns && (field === 'blockCode1' || field === 'blockCode2')) return null;
 
     const currentLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
@@ -560,11 +578,7 @@ const TransactionCodes = () => {
               >
                 Next
               </button>
-              <button
-                className="page-btn"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
+              <button className="page-btn" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
                 Last
               </button>
             </div>
@@ -573,9 +587,7 @@ const TransactionCodes = () => {
       )}
 
       <style>{`
-        .transaction-codes-container {
-          padding: 20px;
-        }
+        .transaction-codes-container { padding: 20px; }
 
         .header-section {
           display: flex;
@@ -585,9 +597,7 @@ const TransactionCodes = () => {
           padding-bottom: 10px;
         }
 
-        .title-section h2 {
-          margin: 0 0 5px 0;
-        }
+        .title-section h2 { margin: 0 0 5px 0; }
 
         .subtitle {
           margin: 0;
@@ -596,11 +606,7 @@ const TransactionCodes = () => {
           font-style: italic;
         }
 
-        .header-controls {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-        }
+        .header-controls { display: flex; gap: 10px; align-items: center; }
 
         .source-filter {
           padding: 8px 12px;
@@ -611,11 +617,7 @@ const TransactionCodes = () => {
           cursor: pointer;
           transition: all 0.2s;
         }
-
-        .source-filter:hover {
-          border-color: rgb(23, 41, 176);
-        }
-
+        .source-filter:hover { border-color: rgb(23, 41, 176); }
         .source-filter:focus {
           outline: none;
           border-color: rgb(23, 41, 176);
@@ -623,231 +625,102 @@ const TransactionCodes = () => {
         }
 
         .download-container { position: relative; }
-
         .download-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
+          display: flex; align-items: center; gap: 6px;
+          padding: 8px 14px; background-color: white; border: 1px solid #dee2e6;
+          border-radius: 4px; font-size: 14px; cursor: pointer; transition: all 0.2s;
         }
-
-        .download-btn:hover {
-          background-color: #f8f9fa;
-          border-color: rgb(23, 41, 176);
-        }
-
+        .download-btn:hover { background-color: #f8f9fa; border-color: rgb(23, 41, 176); }
         .download-icon { font-size: 16px; }
 
         .download-dropdown {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          margin-top: 5px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
+          position: absolute; top: 100%; right: 0; margin-top: 5px;
+          background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          z-index: 1001;
-          min-width: 180px;
+          z-index: 1001; min-width: 180px;
         }
-
         .download-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          width: 100%;
-          padding: 10px 15px;
-          background: none;
-          border: none;
-          font-size: 14px;
-          color: #333;
-          cursor: pointer;
-          text-align: left;
-          transition: background-color 0.2s;
+          display: flex; align-items: center; gap: 8px; width: 100%;
+          padding: 10px 15px; background: none; border: none; font-size: 14px;
+          color: #333; cursor: pointer; text-align: left; transition: background-color 0.2s;
         }
-
         .download-option:hover { background-color: #f8f9fa; }
-
         .download-option:not(:last-child) { border-bottom: 1px solid #f0f0f0; }
-
         .file-icon { font-size: 16px; }
 
         .column-toggle-container { position: relative; }
-
         .column-toggle-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
+          display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+          background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
+          font-size: 14px; cursor: pointer; transition: all 0.2s;
         }
-
-        .column-toggle-btn:hover {
-          background-color: #f8f9fa;
-          border-color: rgb(23, 41, 176);
-        }
-
+        .column-toggle-btn:hover { background-color: #f8f9fa; border-color: rgb(23, 41, 176); }
         .toggle-icon { font-size: 16px; }
 
         .column-toggle-dropdown {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          margin-top: 5px;
-          background-color: white;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
+          position: absolute; top: 100%; right: 0; margin-top: 5px;
+          background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          z-index: 1001;
-          min-width: 200px;
+          z-index: 1001; min-width: 200px;
         }
-
         .dropdown-header {
-          padding: 10px 15px;
-          border-bottom: 1px solid #dee2e6;
-          font-weight: 600;
-          font-size: 14px;
-          color: #333;
+          padding: 10px 15px; border-bottom: 1px solid #dee2e6;
+          font-weight: 600; font-size: 14px; color: #333;
         }
-
         .column-checkbox {
-          display: flex;
-          align-items: center;
-          padding: 8px 15px;
-          cursor: pointer;
+          display: flex; align-items: center; padding: 8px 15px; cursor: pointer;
           transition: background-color 0.2s;
         }
-
         .column-checkbox:hover { background-color: #f8f9fa; }
-
-        .column-checkbox input[type="checkbox"] {
-          margin-right: 10px;
-          cursor: pointer;
-        }
-
-        .checkbox-label {
-          font-size: 14px;
-          color: #333;
-          user-select: none;
-        }
+        .column-checkbox input[type="checkbox"] { margin-right: 10px; cursor: pointer; }
+        .checkbox-label { font-size: 14px; color: #333; user-select: none; }
 
         table { width: 100%; border-collapse: collapse; table-layout: auto; }
-
-        th, td {
-          padding: 10px 12px;
-          text-align: left;
-          vertical-align: middle;
-          border: 1px solid #dee2e6;
-        }
-
+        th, td { padding: 10px 12px; text-align: left; vertical-align: middle; border: 1px solid #dee2e6; }
         th {
-          background-color: rgb(23, 41, 176);
-          color: white;
-          font-weight: 600;
-          font-size: 14px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          background-color: rgb(23, 41, 176); color: white; font-weight: 600;
+          font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;
         }
-
         td { font-size: 14px; }
 
         .filter-row td {
-          background-color: #f8f9fa;
-          padding: 6px;
-          border: 1px solid #dee2e6;
-          position: relative;
+          background-color: #f8f9fa; padding: 6px; border: 1px solid #dee2e6; position: relative;
         }
 
         .input-wrapper { position: relative; width: 100%; }
-
         .filter-input {
-          width: 100%;
-          padding: 6px 10px;
-          border: 1px solid #ced4da;
-          border-radius: 3px;
-          font-size: 14px;
-          background-color: white;
-          box-sizing: border-box;
-          height: 32px;
+          width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 3px;
+          font-size: 14px; background-color: white; box-sizing: border-box; height: 32px;
         }
-
         .filter-input:focus {
-          outline: none;
-          border-color: rgb(23, 41, 176);
+          outline: none; border-color: rgb(23, 41, 176);
           box-shadow: 0 0 0 2px rgba(23, 41, 176, 0.1);
         }
-
         .filter-input::placeholder { color: #999; opacity: 1; font-size: 13px; }
 
         .dropdown-suggestions {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background-color: #fff;
-          border: 1px solid #dee2e6;
-          border-top: none;
-          max-height: 220px;
-          overflow-y: auto;
-          z-index: 1002;
+          position: absolute; top: 100%; left: 0; right: 0;
+          background-color: #fff; border: 1px solid #dee2e6; border-top: none;
+          max-height: 220px; overflow-y: auto; z-index: 1002;
         }
-
-        .suggestion-item {
-          padding: 8px 10px;
-          cursor: pointer;
-          font-size: 14px;
-        }
-
+        .suggestion-item { padding: 8px 10px; cursor: pointer; font-size: 14px; }
         .suggestion-item:hover { background-color: #f1f3f5; }
 
-        .no-transactions-found {
-          margin-top: 12px;
-          color: #666;
-          font-style: italic;
-        }
+        .no-transactions-found { margin-top: 12px; color: #666; font-style: italic; }
 
         .pagination-container {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 12px;
-          flex-wrap: wrap;
-          gap: 10px;
+          display: flex; justify-content: space-between; align-items: center;
+          margin-top: 12px; flex-wrap: wrap; gap: 10px;
         }
-
         .pagination-controls { display: flex; gap: 6px; align-items: center; }
-
         .page-btn {
-          padding: 6px 10px;
-          border: 1px solid #dee2e6;
-          background: #fff;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 13px;
+          padding: 6px 10px; border: 1px solid #dee2e6; background: #fff;
+          border-radius: 4px; cursor: pointer; font-size: 13px;
         }
-
-        .page-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .page-number.active {
-          background: rgb(23, 41, 176);
-          color: #fff;
-          border-color: rgb(23, 41, 176);
+          background: rgb(23, 41, 176); color: #fff; border-color: rgb(23, 41, 176);
         }
-
         .page-ellipsis { padding: 0 6px; color: #777; }
       `}</style>
     </div>
