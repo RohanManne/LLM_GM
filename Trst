@@ -134,21 +134,24 @@ const TransactionCodes = () => {
     return filtered;
   }, [transData, filters, sourceFilterMode]);
 
-  // ---- Sticky Globestar columns logic ----
+  // ---- Sticky Globestar columns logic (with Non-Globestar priority) ----
   const hasGlobestarInDataset = useMemo(
     () => transData.some((item) => (item.source || '').toLowerCase().includes('globestar')),
     [transData]
   );
 
-  // Keep Block Code columns visible if:
-  // - user selected Globestar Only, OR
-  // - user is typing in block-code inputs, OR
-  // - filtered data contains a Globestar row, OR
-  // - dataset has any Globestar at all (optional, keeps columns generally available)
   const showGlobestarColumns = useMemo(() => {
+    // Highest priority: Non-Globestar must HIDE Block Code columns
+    if (sourceFilterMode === 'non-globestar') return false;
+
+    // Next: Globestar Only must SHOW Block Code columns
     if (sourceFilterMode === 'globestar') return true;
+
+    // Otherwise, sticky behavior
     if ((inputValues.blockCode1 || '').trim() || (inputValues.blockCode2 || '').trim()) return true;
     if (filteredData.some((item) => (item.source || '').toLowerCase().includes('globestar'))) return true;
+
+    // Or keep available if dataset contains any Globestar rows (optional)
     return hasGlobestarInDataset;
   }, [
     sourceFilterMode,
@@ -157,7 +160,16 @@ const TransactionCodes = () => {
     filteredData,
     hasGlobestarInDataset,
   ]);
-  // ----------------------------------------
+
+  // When switching to Non-Globestar, clear block-code filters/inputs
+  useEffect(() => {
+    if (sourceFilterMode === 'non-globestar') {
+      setFilters((prev) => ({ ...prev, blockCode1: '', blockCode2: '' }));
+      setInputValues((prev) => ({ ...prev, blockCode1: '', blockCode2: '' }));
+      setActiveDropdown(null);
+    }
+  }, [sourceFilterMode]);
+  // ---------------------------------------------------------------------
 
   const activeColumnLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
 
@@ -393,7 +405,7 @@ const TransactionCodes = () => {
   };
 
   const renderFilterInput = (field, placeholder) => {
-    // Keep block code inputs visible when showGlobestarColumns is true (sticky logic handles it)
+    // Hide block-code inputs only when showGlobestarColumns=false (which includes Non-Globestar)
     if (!showGlobestarColumns && (field === 'blockCode1' || field === 'blockCode2')) return null;
 
     const currentLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
