@@ -103,27 +103,31 @@ source: […new Set(transData.map(item => item.source))].filter(Boolean).sort(),
 
 // Memoize filtered data with trimmed filter values
 const filteredData = useMemo(() => {
-console.log(‘Current filters:’, filters);
-console.log(‘Source filter mode:’, sourceFilterMode);
+let filtered = transData.filter((row) => {
+// Apply source filter mode first
+if (sourceFilterMode === ‘globestar’ && !row.source.toLowerCase().includes(‘globestar’)) {
+return false;
+}
+if (sourceFilterMode === ‘non-globestar’ && row.source.toLowerCase().includes(‘globestar’)) {
+return false;
+}
 
 ```
-let filtered = transData.filter((row) => {
-  // Apply source filter mode first
-  if (sourceFilterMode === 'globestar' && !row.source.toLowerCase().includes('globestar')) {
-    return false;
-  }
-  if (sourceFilterMode === 'non-globestar' && row.source.toLowerCase().includes('globestar')) {
-    return false;
-  }
+  // Then apply all filters the same way - treat block codes like any other field
+  return Object.entries(filters).every(([key, val]) => {
+    if (!val || !val.trim()) return true;
+    return row[key].toLowerCase().includes(val.trim().toLowerCase());
+  });
+});
 
-  // Then apply regular filters
-  const passesFilters = Object.entries(filters).every(([key, val]) => {
-    // If there's no filter value, pass
-    if (!val || val === '') return true;
-    
-    const filterValue = val.trim().toLowerCase();
-    if (filterValue === '') return true;
-    
+return filtered;
+```
+
+}, [transData, filters, sourceFilterMode]);
+const filterValue = val.trim().toLowerCase();
+if (filterValue === ‘’) return true;
+
+```
     // For block code filters:
     if (key === 'blockCode1' || key === 'blockCode2') {
       const isGlobestarRow = row.source.toLowerCase().includes('globestar');
