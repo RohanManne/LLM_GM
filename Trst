@@ -8,6 +8,8 @@ const TransactionCodes = () => {
     blockCode1: '',
     blockCode2: '',
     marketLocation: '',
+    batchCode: '',
+    subCode: '',
     value: '',
     description: '',
     source: '',
@@ -16,12 +18,13 @@ const TransactionCodes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
-  // Column visibility (Market Location is universal; we ignore its toggle below)
+  // Column visibility (marketLocation is universal; we ignore its toggle)
   const [visibleColumns, setVisibleColumns] = useState({
     name: true,
     blockCode1: true,
     blockCode2: true,
-    // marketLocation intentionally omitted from user control
+    batchCode: true,
+    subCode: true,
     value: true,
     description: true,
     source: true,
@@ -33,23 +36,45 @@ const TransactionCodes = () => {
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const downloadMenuRef = useRef(null);
 
-  // 'all' | 'globestar' | 'non-globestar'
+  // Source filter mode: 'all' | 'globestar' | 'triumph' | 'cars'
   const [sourceFilterMode, setSourceFilterMode] = useState('all');
 
-  // Labels (render/export order: Market Location before Field Value)
-  const columnLabelsGlobestar = {
+  // Labels by mode (order matters)
+  const columnLabelsAll = {
     name: 'Field Name',
     blockCode1: 'Block Code 1',
     blockCode2: 'Block Code 2',
-    marketLocation: 'Market Location', // universal
+    marketLocation: 'Market Location',
+    batchCode: 'Batch Code',
+    subCode: 'Sub Code',
     value: 'Field Value',
     description: 'Field Description',
     source: 'System Source Name',
   };
 
-  const columnLabelsStandard = {
+  const columnLabelsGlobestar = {
     name: 'Field Name',
-    marketLocation: 'Market Location', // universal
+    blockCode1: 'Block Code 1',
+    blockCode2: 'Block Code 2',
+    marketLocation: 'Market Location',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
+
+  const columnLabelsTriumph = {
+    name: 'Field Name',
+    marketLocation: 'Market Location',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
+
+  const columnLabelsCARS = {
+    name: 'Field Name',
+    marketLocation: 'Market Location',
+    batchCode: 'Batch Code',
+    subCode: 'Sub Code',
     value: 'Field Value',
     description: 'Field Description',
     source: 'System Source Name',
@@ -61,6 +86,8 @@ const TransactionCodes = () => {
     blockCode1: [],
     blockCode2: [],
     marketLocation: [],
+    batchCode: [],
+    subCode: [],
     value: [],
     description: [],
     source: [],
@@ -68,22 +95,23 @@ const TransactionCodes = () => {
 
   const dropdownRefs = useRef({});
 
-  // Separate input values for debouncing
+  // Separate input values for debouncing (keeps inputs snappy)
   const [inputValues, setInputValues] = useState({
     name: '',
     blockCode1: '',
     blockCode2: '',
     marketLocation: '',
+    batchCode: '',
+    subCode: '',
     value: '',
     description: '',
     source: '',
   });
 
-  // Transform data (Market Location comes from JSON)
+  // Transform data once (robust key lookups for new columns)
   const transData = useMemo(
     () =>
       transactionData.Triumph_Trans_Codes.map((item) => {
-        // robust lookup for Market Location just in case of key variants
         const marketLocation =
           item['Market Location'] ??
           item['Market location'] ??
@@ -92,11 +120,29 @@ const TransactionCodes = () => {
           item['market location'] ??
           '';
 
+        const batchCode =
+          item['Batch Code'] ??
+          item['Batch code'] ??
+          item['BatchCode'] ??
+          item['batchCode'] ??
+          item['batch code'] ??
+          '';
+
+        const subCode =
+          item['Sub Code'] ??
+          item['Sub code'] ??
+          item['SubCode'] ??
+          item['subCode'] ??
+          item['sub code'] ??
+          '';
+
         return {
           name: item['Field Name'] || '',
           blockCode1: item['Block Code 1'] || '',
           blockCode2: item['Block Code 2'] || '',
           marketLocation,
+          batchCode,
+          subCode,
           value: item['Field Value'] || '',
           description: item['Field Description'] || '',
           source: item['System Source Name'] || '',
@@ -109,25 +155,11 @@ const TransactionCodes = () => {
   const uniqueValues = useMemo(
     () => ({
       name: [...new Set(transData.map((i) => i.name))].filter(Boolean).sort(),
-      blockCode1: [
-        ...new Set(
-          transData
-            .filter((i) => (i.source || '').toLowerCase().includes('globestar'))
-            .map((i) => i.blockCode1)
-        ),
-      ]
-        .filter(Boolean)
-        .sort(),
-      blockCode2: [
-        ...new Set(
-          transData
-            .filter((i) => (i.source || '').toLowerCase().includes('globestar'))
-            .map((i) => i.blockCode2)
-        ),
-      ]
-        .filter(Boolean)
-        .sort(),
+      blockCode1: [...new Set(transData.map((i) => i.blockCode1))].filter(Boolean).sort(),
+      blockCode2: [...new Set(transData.map((i) => i.blockCode2))].filter(Boolean).sort(),
       marketLocation: [...new Set(transData.map((i) => i.marketLocation))].filter(Boolean).sort(),
+      batchCode: [...new Set(transData.map((i) => i.batchCode))].filter(Boolean).sort(),
+      subCode: [...new Set(transData.map((i) => i.subCode))].filter(Boolean).sort(),
       value: [...new Set(transData.map((i) => i.value))].filter(Boolean).sort(),
       description: [...new Set(transData.map((i) => i.description))].filter(Boolean).sort(),
       source: [...new Set(transData.map((i) => i.source))].filter(Boolean).sort(),
@@ -135,16 +167,16 @@ const TransactionCodes = () => {
     [transData]
   );
 
-  // Apply filters
+  // Filter rows by source mode + field filters
   const filteredData = useMemo(() => {
+    const src = (s) => (s || '').toLowerCase();
     return transData.filter((row) => {
-      const isGlobestar = (row.source || '').toLowerCase().includes('globestar');
+      const s = src(row.source);
 
-      // Source mode first
-      if (sourceFilterMode === 'globestar' && !isGlobestar) return false;
-      if (sourceFilterMode === 'non-globestar' && isGlobestar) return false;
+      if (sourceFilterMode === 'globestar' && !s.includes('globestar')) return false;
+      if (sourceFilterMode === 'triumph' && !s.includes('triumph')) return false;
+      if (sourceFilterMode === 'cars' && !s.includes('cars')) return false;
 
-      // Field-by-field filters
       return Object.entries(filters).every(([key, val]) => {
         if (!val || !val.trim()) return true;
         return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
@@ -152,36 +184,19 @@ const TransactionCodes = () => {
     });
   }, [transData, filters, sourceFilterMode]);
 
-  // ---- Sticky Globestar columns logic (Non-Globestar has priority) ----
-  const hasGlobestarInDataset = useMemo(
-    () => transData.some((i) => (i.source || '').toLowerCase().includes('globestar')),
-    [transData]
-  );
-
-  const showGlobestarColumns = useMemo(() => {
-    if (sourceFilterMode === 'non-globestar') return false;  // force-hide block codes
-    if (sourceFilterMode === 'globestar') return true;       // force-show block codes
-    if ((inputValues.blockCode1 || '').trim() || (inputValues.blockCode2 || '').trim()) return true;
-    if (filteredData.some((i) => (i.source || '').toLowerCase().includes('globestar'))) return true;
-    return hasGlobestarInDataset;
-  }, [
-    sourceFilterMode,
-    inputValues.blockCode1,
-    inputValues.blockCode2,
-    filteredData,
-    hasGlobestarInDataset,
-  ]);
-
-  // Clear block-code filters when switching to Non-Globestar
-  useEffect(() => {
-    if (sourceFilterMode === 'non-globestar') {
-      setFilters((p) => ({ ...p, blockCode1: '', blockCode2: '' }));
-      setInputValues((p) => ({ ...p, blockCode1: '', blockCode2: '' }));
-      setActiveDropdown(null);
+  // Pick active label set by mode
+  const activeColumnLabels = useMemo(() => {
+    switch (sourceFilterMode) {
+      case 'globestar':
+        return columnLabelsGlobestar;
+      case 'triumph':
+        return columnLabelsTriumph;
+      case 'cars':
+        return columnLabelsCARS;
+      default:
+        return columnLabelsAll; // 'all'
     }
   }, [sourceFilterMode]);
-
-  const activeColumnLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
 
   // Pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
@@ -189,7 +204,7 @@ const TransactionCodes = () => {
   const endIndex = startIndex + rowsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  // Reset page on filter changes
+  // Reset page on filter/mode changes
   useEffect(() => {
     setCurrentPage(1);
   }, [filters, sourceFilterMode]);
@@ -218,7 +233,6 @@ const TransactionCodes = () => {
     setInputValues((prev) => ({ ...prev, [field]: value }));
     debouncedSetFilters(field, value);
 
-    // Suggestions
     if (value.trim()) {
       const suggestions = (uniqueValues[field] || [])
         .filter((item) => item.toLowerCase().includes(value.toLowerCase()))
@@ -249,25 +263,20 @@ const TransactionCodes = () => {
   };
 
   const toggleColumn = (column) => {
-    // Market Location is universal — ignore toggling attempts on it
-    if (column === 'marketLocation') return;
+    if (column === 'marketLocation') return; // universal; ignore toggle
+    // Only toggle columns that exist in the current mode
+    if (!(column in activeColumnLabels)) return;
     setVisibleColumns((prev) => ({ ...prev, [column]: !prev[column] }));
   };
 
-  // Downloads (always include Market Location)
+  // Downloads — include only columns from the active set; always include Market Location
   const downloadAsJSON = () => {
     const visibleData = filteredData.map((row) => {
       const visibleRow = {};
-      const isGlobestar = (row.source || '').toLowerCase().includes('globestar');
-      const columnsToUse = isGlobestar ? columnLabelsGlobestar : columnLabelsStandard;
-
-      Object.entries(columnsToUse).forEach(([key, label]) => {
-        // Always include marketLocation
+      Object.entries(activeColumnLabels).forEach(([key, label]) => {
         if (key !== 'marketLocation' && !visibleColumns[key]) return;
-        if ((key === 'blockCode1' || key === 'blockCode2') && !isGlobestar) return;
         visibleRow[label] = (row[key] || '').toString();
       });
-
       return visibleRow;
     });
 
@@ -286,23 +295,15 @@ const TransactionCodes = () => {
 
   const downloadAsCSV = () => {
     const headers = Object.entries(activeColumnLabels)
-      .filter(([key]) => {
-        if (key === 'marketLocation') return true; // always include
-        return visibleColumns[key] && (showGlobestarColumns || (key !== 'blockCode1' && key !== 'blockCode2')));
-      })
+      .filter(([key]) => key === 'marketLocation' || visibleColumns[key])
       .map(([, label]) => label);
 
     let csvContent = headers.map((h) => `"${h}"`).join(',') + '\n';
 
     filteredData.forEach((row) => {
-      const isGlobestar = (row.source || '').toLowerCase().includes('globestar');
       const rowData = Object.keys(activeColumnLabels)
-        .filter((key) => {
-          if (key === 'marketLocation') return true; // always include
-          return visibleColumns[key] && (showGlobestarColumns || (key !== 'blockCode1' && key !== 'blockCode2')));
-        })
+        .filter((key) => key === 'marketLocation' || visibleColumns[key])
         .map((key) => {
-          if ((key === 'blockCode1' || key === 'blockCode2') && !isGlobestar) return '';
           const value = row[key] || '';
           const escaped = value.toString().replace(/"/g, '""');
           return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
@@ -326,18 +327,10 @@ const TransactionCodes = () => {
   const downloadAsExcel = () => {
     const excelData = filteredData.map((row) => {
       const visibleRow = {};
-      const isGlobestar = (row.source || '').toLowerCase().includes('globestar');
-
       Object.entries(activeColumnLabels).forEach(([key, label]) => {
-        // Always include marketLocation
         if (key !== 'marketLocation' && !visibleColumns[key]) return;
-        if (key === 'blockCode1' || key === 'blockCode2') {
-          visibleRow[label] = isGlobestar ? row[key] || '' : '';
-        } else {
-          visibleRow[label] = row[key] || '';
-        }
+        visibleRow[label] = row[key] || '';
       });
-
       return visibleRow;
     });
 
@@ -350,14 +343,7 @@ const TransactionCodes = () => {
         wch:
           Math.max(
             label.length,
-            ...filteredData
-              .map((row) => {
-                if ((key === 'blockCode1' || key === 'blockCode2') && !(row.source || '').toLowerCase().includes('globestar')) {
-                  return 0;
-                }
-                return (row[key] || '').toString().length;
-              })
-              .slice(0, 10)
+            ...filteredData.map((row) => (row[key] || '').toString().length).slice(0, 10)
           ) + 2,
       }));
 
@@ -416,10 +402,13 @@ const TransactionCodes = () => {
   };
 
   const renderFilterInput = (field, placeholder) => {
-    // Hide block-code inputs when showGlobestarColumns = false (includes Non-Globestar)
-    if (!showGlobestarColumns && (field === 'blockCode1' || field === 'blockCode2')) return null;
+    // Render only if the field is part of the active mode's columns,
+    // except marketLocation which is universal and always shown
+    const isUniversal = field === 'marketLocation';
+    if (!isUniversal && !(field in activeColumnLabels)) return null;
+    if (!isUniversal && !visibleColumns[field]) return null;
 
-    const currentLabels = showGlobestarColumns ? columnLabelsGlobestar : columnLabelsStandard;
+    const currentLabels = activeColumnLabels;
 
     return (
       <td key={field}>
@@ -447,6 +436,8 @@ const TransactionCodes = () => {
     );
   };
 
+  const activeKeys = Object.keys(activeColumnLabels); // rendering order
+
   return (
     <div className="transaction-codes-container">
       <div className="header-section">
@@ -463,7 +454,8 @@ const TransactionCodes = () => {
           >
             <option value="all">All Sources</option>
             <option value="globestar">Globestar Only</option>
-            <option value="non-globestar">Non-Globestar</option>
+            <option value="triumph">Triumph Only</option>
+            <option value="cars">CARS Only</option>
           </select>
 
           <div className="download-container" ref={downloadMenuRef}>
@@ -494,9 +486,7 @@ const TransactionCodes = () => {
               <div className="column-toggle-dropdown">
                 <div className="dropdown-header">Show/Hide Columns</div>
                 {Object.entries(activeColumnLabels).map(([key, label]) => {
-                  if (!showGlobestarColumns && (key === 'blockCode1' || key === 'blockCode2')) return null;
                   if (key === 'marketLocation') {
-                    // Universal: show as checked + disabled so users know it's fixed
                     return (
                       <label key={key} className="column-checkbox" title="This column is universal and cannot be hidden">
                         <input type="checkbox" checked readOnly disabled />
@@ -524,51 +514,32 @@ const TransactionCodes = () => {
       <table className="table border table-striped" data-toggle="datatable">
         <thead>
           <tr>
-            {visibleColumns.name && <th scope="col">Field Name</th>}
-            {showGlobestarColumns && visibleColumns.blockCode1 && <th scope="col">Block Code 1</th>}
-            {showGlobestarColumns && visibleColumns.blockCode2 && <th scope="col">Block Code 2</th>}
-            {/* Market Location is universal: always render */}
-            <th scope="col">Market Location</th>
-            {visibleColumns.value && <th scope="col">Field Value</th>}
-            {visibleColumns.description && <th scope="col">Field Description</th>}
-            {visibleColumns.source && <th scope="col">System Source Name</th>}
+            {activeKeys.map((key) => {
+              const label = activeColumnLabels[key];
+              if (key === 'marketLocation') return <th scope="col" key={key}>{label}</th>;
+              if (!visibleColumns[key]) return null;
+              return <th scope="col" key={key}>{label}</th>;
+            })}
           </tr>
         </thead>
         <tbody>
           <tr className="filter-row">
-            {visibleColumns.name && renderFilterInput('name', 'Filter Name')}
-            {showGlobestarColumns && visibleColumns.blockCode1 && renderFilterInput('blockCode1', 'Filter Block 1')}
-            {showGlobestarColumns && visibleColumns.blockCode2 && renderFilterInput('blockCode2', 'Filter Block 2')}
-            {/* Universal filter input */}
-            {renderFilterInput('marketLocation', 'Filter Market Location')}
-            {visibleColumns.value && renderFilterInput('value', 'Filter Value')}
-            {visibleColumns.description && renderFilterInput('description', 'Filter Description')}
-            {visibleColumns.source && renderFilterInput('source', 'Filter Source')}
+            {activeKeys.map((key) => {
+              if (key === 'marketLocation') return renderFilterInput('marketLocation', 'Filter Market Location');
+              return renderFilterInput(key, `Filter ${activeColumnLabels[key]}`);
+            })}
           </tr>
 
-          {currentData.map((row, idx) => {
-            const isGlobestarRow = (row.source || '').toLowerCase().includes('globestar');
-            return (
-              <tr key={`trans-code-${startIndex + idx}`}>
-                {visibleColumns.name && <td>{row.name}</td>}
-                {showGlobestarColumns && visibleColumns.blockCode1 && (
-                  <td style={{ backgroundColor: !isGlobestarRow ? '#f9f9f9' : 'inherit' }}>
-                    {isGlobestarRow ? row.blockCode1 : '-'}
-                  </td>
-                )}
-                {showGlobestarColumns && visibleColumns.blockCode2 && (
-                  <td style={{ backgroundColor: !isGlobestarRow ? '#f9f9f9' : 'inherit' }}>
-                    {isGlobestarRow ? row.blockCode2 : '-'}
-                  </td>
-                )}
-                {/* Universal cell (fallback to '-' so it's visibly present) */}
-                <td>{row.marketLocation || '-'}</td>
-                {visibleColumns.value && <td>{row.value}</td>}
-                {visibleColumns.description && <td>{row.description}</td>}
-                {visibleColumns.source && <td>{row.source}</td>}
-              </tr>
-            );
-          })}
+          {currentData.map((row, idx) => (
+            <tr key={`trans-code-${startIndex + idx}`}>
+              {activeKeys.map((key) => {
+                const val = (row[key] || '').toString();
+                if (key === 'marketLocation') return <td key={`${idx}-${key}`}>{val || '-'}</td>;
+                if (!visibleColumns[key]) return null;
+                return <td key={`${idx}-${key}`}>{val}</td>;
+              })}
+            </tr>
+          ))}
         </tbody>
       </table>
 
@@ -677,7 +648,7 @@ const TransactionCodes = () => {
         .column-toggle-dropdown {
           position: absolute; top: 100%; right: 0; margin-top: 5px;
           background-color: white; border: 1px solid #dee2e6; border-radius: 4px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 1001; min-width: 200px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 1001; min-width: 220px;
         }
         .dropdown-header {
           padding: 10px 15px; border-bottom: 1px solid #dee2e6;
