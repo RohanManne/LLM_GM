@@ -1,0 +1,77 @@
+Primary Goal – What’s the main outcome you want from lineage/metadata (e.g., compliance/audit, faster troubleshooting, data discovery, governance, ownership tracking)?
+	2.	Scope of Systems – Which systems or data sources should we prioritize first (Postgres, Cassandra, ETL jobs, dashboards, APIs)?
+	3.	Level of Detail – Do you need lineage at a high level (system → system) or more granular (table/column-level)?
+	4.	Timeliness – Should lineage updates be real-time or is batch/daily refresh acceptable?
+	5.	User Access – How do you expect end-users to interact with this (through a UI catalog, embedded in dashboards, API integration)?
+	6.	Governance Needs – Do you also need data access controls, business metadata, and ownership visibility, or mainly technical lineage?
+	7.	Priorities – If we can only deliver one capability first, which is most valuable to you:
+	•	Lineage visualization
+	•	Data catalog/discovery
+	•	Data quality monitoring
+	•	Governance/ownership tracking
+
+Category
+OpenLineage
+OpenMetadata
+DataHub
+OpenDataDiscovery (ODD)
+Primary Focus
+Standard for collecting lineage events across pipelines (execution-level)
+End-to-end data catalog with lineage, governance, quality
+Enterprise metadata platform (catalog, lineage, governance)
+Lightweight discovery & observability for data assets
+Lineage Support
+Strong – execution-level, job & dataset lineage
+Strong – table/column-level lineage, integrates with ETL
+Strong – table/column-level, fine-grained
+Good – dataset-level lineage, lighter than DataHub/OpenMetadata
+Metadata Types
+Mainly technical lineage
+Technical + business metadata, glossary, ownership
+Technical + business metadata, schemas, ownership
+Technical metadata, limited business metadata
+Governance
+❌ None
+✅ Roles, policies, access control
+✅ Roles, policies, tags
+⚠️ Limited (basic ownership, tags)
+Discovery / Catalog
+❌ Not a catalog
+✅ Rich UI, search, discovery
+✅ Rich UI, search, discovery
+✅ Catalog UI (simpler than DataHub/OM)
+Integration
+Airflow, Spark, dbt, Flink, Kafka, Kubernetes
+Airflow, dbt, Kafka, BigQuery, Snowflake, many connectors
+Airflow, dbt, Kafka, Snowflake, Hive, Looker, Tableau, many
+Airflow, dbt, Spark, Snowflake, basic integrations
+UI/UX
+None (needs Marquez or another UI)
+Full-featured modern UI
+Full-featured UI
+Simple UI (less mature)
+Extensibility
+Spec-driven (JSON events)
+API + connectors + plugins
+API + plugins + extensions
+API-first, can extend, smaller ecosystem
+Community & Maturity
+CNCF Sandbox project, growing adoption
+Apache incubator, strong adoption
+LinkedIn-born, strong enterprise adoption
+Newer project, smaller community
+Best For
+Teams needing standardized lineage collection (can plug into other catalogs)
+All-in-one catalog + lineage + governance
+Enterprise-scale catalog/governance with lineage
+Teams needing fast, lightweight catalog/lineage setup
+Weaknesses
+No UI, no governance, just lineage
+Heavier setup, may be overkill if you only need lineage
+Heavier infra (Kafka backend), learning curve
+Less mature, fewer enterprise features
+Example Use Cases
+Capture job/dataset lineage from Airflow pipelines into Marquez
+Full data discovery & governance for analysts, compliance
+Enterprise metadata hub across BI + data engineering + ML
+Lightweight metadata/lineage for modern data stack
