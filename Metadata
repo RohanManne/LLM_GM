@@ -89,3 +89,14 @@ Backed by LF AI & Data Foundation.
 Active contributors (Datakin, Microsoft, WeWork).
 
 Healthy GitHub repo + Slack channel.
+
+
+
+Focus: Centralized data catalog + governance + lineage, with collaboration features.
+	•	Core: Java backend (Spring Boot) with MySQL/PostgreSQL + Elasticsearch; supports distributed metadata storage and search.
+	•	Spec: Implements OpenMetadata APIs (REST + GraphQL) for metadata, lineage, governance.
+	•	Integrations: 80+ connectors (dbt, Airflow, Spark, Kafka, Snowflake, BigQuery, Redshift, Tableau, Looker, etc.).
+	•	Lineage: Supports table-, column-, and pipeline-level lineage with impact analysis; integrates technical + business lineage.
+	•	Visualization: Rich UI with lineage graphs, data quality dashboards, profiler outputs.
+	•	Strengths: Mature governance features (data quality, PII tagging, policies), strong community, enterprise-ready collaboration (ownership, glossary, workflows).
+	•	Limitations: Heavier setup (multiple services: MySQL/ES/Kafka), higher infra footprint than ODD; learning curve for governance features.
