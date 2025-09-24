@@ -1,0 +1,135 @@
+# OpenLineage Metadata Architecture for Databases
+
+This architecture explains how to get metadata from databases (e.g., Postgres) or other storage systems, emit OpenLineage events, and visualize lineage and metadata.
+
+---
+
+## 1) Big Picture (layers)
+
+[Producers / Collectors]
+  • Airflow / Spark / dbt (pipeline-aware)
+  • DB Crawler (reads system catalogs: Postgres, Snowflake, etc.)
+      ↓  (OpenLineage events: Run, Job, Dataset + facets)
+
+[Transport]
+  • HTTP → OL endpoint (e.g., Marquez)
+  • or Kafka topic (fan-out to multiple consumers)
+      ↓
+
+[Storage / Lineage Service]
+  • Marquez (OpenLineage reference backend + API)
+      ↓
+
+[Consumers / UX]
+  • Marquez UI (lineage graph & metadata views)
+  • Data Catalog / Governance (optional)
+  • Observability / Analytics (optional)
+
+---
+
+## 2) Two complementary ways to **collect** metadata
+
+### A) Pipeline-driven lineage (best fidelity)
+- Tools like Airflow / Spark / dbt emit lineage events at run-time.
+- Events include inputs, outputs, run state, schema, and owners.
+- Flow:
+  Airflow task / dbt model / Spark job
+        └─ emits OpenLineage event (HTTP/Kafka)
+                └─ Marquez stores & serves lineage
+                        └─ Marquez UI visualizes DAG/graph
+
+### B) Database-scan lineage (crawler-based)
+- For systems without pipeline hooks, use a crawler that queries `information_schema` / catalogs.
+- Extracts datasets, relationships, dependencies (views, FKs, procs).
+- Emits synthetic Job/Run events into OpenLineage.
+
+Flow:
+  Crawler (scheduled)
+        └─ reads DB catalogs + parses SQL
+              └─ emits OpenLineage events
+                    └─ Marquez + UI
+
+---
+
+## 3) Concrete **Postgres** mapping (example)
+
+**Entities:**
+- Dataset → `postgres://<cluster>/<db>.<schema>.<table>`
+- Job → logical transform (Airflow task ID, dbt model, or crawler synthetic job)
+- Run → single execution (UUID, timestamps, state)
+
+**Examples:**
+
+### (i) Airflow → Postgres
+Airflow task (extract_users)
+   reads: postgres://prod/app.public.users
+   writes: postgres://prod/dwh.stage.users_stg
+   ↓ emits OL event (HTTP)
+Marquez stores & UI shows lineage edge.
+
+### (ii) dbt → Postgres
+dbt model (dim_customers)
+   sources: users, invoices
+   target: dwh.marts.dim_customers
+   ↓ emits OL event
+Marquez UI shows graph of sources → model.
+
+### (iii) DB crawler
+Crawler scans Postgres, parses views & FKs, emits events nightly.
+
+---
+
+## 4) Deployment patterns
+
+### Simple (single consumer)
+{Airflow | Spark | dbt | Crawler} ──HTTP──▶ Marquez ─▶ Marquez UI
+
+### Scalable fan-out (Kafka bus)
+{Airflow | Spark | dbt | Crawler} ──▶ Kafka
+     ├─▶ Marquez (stores + UI)
+     ├─▶ Governance tool
+     └─▶ Observability
+
+### Distributor hub (Fluentd/Vector)
+Producers ─HTTP──▶ Collector
+         ├─HTTP──▶ Marquez
+         └─▶ Kafka
+
+---
+
+## 5) Minimal component list to implement
+
+1) **Marquez** (backend + UI)
+2) **Producer integrations**:
+   - Airflow: `openlineage-airflow`
+   - dbt: `openlineage-dbt`
+   - Optional crawler (Python + psycopg2/sqlglot)
+3) **(Optional) Kafka** for multi-consumer distribution
+
+---
+
+## 6) Example OpenLineage JSON Event
+```json
+{
+  "eventType": "COMPLETE",
+  "producer": "airflow-openlineage",
+  "job": {"namespace": "etl", "name": "extract_users"},
+  "run": {"runId": "UUID-here"},
+  "inputs": [{"namespace": "postgres://prod/app", "name": "public.users"}],
+  "outputs": [{"namespace": "postgres://prod/dwh", "name": "stage.users_stg"}],
+  "facets": {
+    "schema": {"fields": [{"name": "id","type": "int"}]},
+    "documentation": {"description": "Daily user extract"}
+  }
+}
+```
+
+---
+
+## 7) Ops notes / best practices
+
+- Stable naming: keep namespace consistent.
+- Column lineage: enable in dbt, Spark where possible.
+- Backfill: run crawler first, then let pipelines add run history.
+- Idempotency: stable Job/Dataset IDs → clean merges.
+- Security: scrub PII, restrict Marquez API/UI.
