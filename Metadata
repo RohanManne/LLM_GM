@@ -99,4 +99,61 @@ Focus: Centralized data catalog + governance + lineage, with collaboration featu
 	•	Lineage: Supports table-, column-, and pipeline-level lineage with impact analysis; integrates technical + business lineage.
 	•	Visualization: Rich UI with lineage graphs, data quality dashboards, profiler outputs.
 	•	Strengths: Mature governance features (data quality, PII tagging, policies), strong community, enterprise-ready collaboration (ownership, glossary, workflows).
-	•	Limitations: Heavier setup (multiple services: MySQL/ES/Kafka), higher infra footprint than ODD; learning curve for governance features.
+	•	Limitations: Heavier setup (multiple services: MySQL/ES/Kafka), higher infra footprint than ODD; learning curve for governance features
+
+OpenLineage
+
+Use Cases (for visualization)
+	•	Visualizing pipeline lineage graphs (e.g., Airflow → dbt → warehouse tables).
+	•	Tracking how a dataset was created/consumed in ETL workflows.
+	•	Understanding upstream/downstream data flow between jobs.
+
+Pros
+	•	Great for end-to-end lineage views across multiple orchestrators.
+	•	Standardized event model makes cross-tool visualization possible.
+	•	Marquez UI shows lineage graph dynamically.
+
+Cons (for visualizing metadata)
+	•	Weak on database-centric metadata: schema, columns, profiling, usage stats.
+	•	Visualization is job-oriented, not schema-oriented → better for pipeline lineage than browsing DB structures.
+	•	Limited built-in search/exploration of datasets; requires extra integration.
+
+⸻
+
+🔹 OpenMetadata
+
+Use Cases (for visualization)
+	•	Browsing database schemas, tables, columns, constraints.
+	•	Exploring data profiling results (null counts, distributions, etc.).
+	•	Seeing both technical lineage (columns) and business metadata (owners, glossary terms).
+
+Pros
+	•	Rich UI for schema exploration and profiling.
+	•	Provides column-level lineage as well as table/database lineage.
+	•	Supports collaboration (owners, tags, descriptions, glossary).
+	•	API + connectors to common DBs (Postgres, MySQL, Snowflake, etc.).
+
+Cons
+	•	Lineage less standardized across orchestrators compared to OpenLineage.
+	•	Visualization heavier (more catalog-like) → not as lightweight as OpenLineage.
+	•	Setup complexity is higher (requires metadata server + ingestion connectors).
+
+⸻
+
+🔹 OpenDataDiscovery (ODD)
+
+Use Cases (for visualization)
+	•	Single UI to view metadata collected from multiple tools.
+	•	Visualizing table schemas, quality checks, and lineage if integrated.
+	•	Acts as a metadata portal, centralizing from dbt, Airflow, Spark, and catalogs.
+
+Pros
+	•	Flexible ingestion model → can consolidate multiple metadata sources.
+	•	Clean modern UI for searching and browsing datasets.
+	•	Can visualize lineage if integrated with OpenLineage/Marquez.
+	•	Good for data discovery + documentation.
+
+Cons
+	•	Visualization depends on ingested connectors; not as detailed as OpenMetadata.
+	•	Still emerging, ecosystem smaller than OpenMetadata.
+	•	Lineage support less native; often piggybacks on OpenLineage.
