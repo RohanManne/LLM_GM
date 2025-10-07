@@ -1,20 +1,20 @@
 return (
-  <div className="transaction-codes-container dls-p-4 dls-bg-white dls-border dls-border-radius-md">
+  <div className="transaction-codes-container pad-2 border">
     {/* Header */}
-    <div className="header-section dls-flex dls-flex-justify-between dls-flex-align-end dls-mb-4 dls-pb-2">
+    <div className="header-section flex flex-justify-between flex-align-end margin-2-b pad-1-b border-bottom">
       {/* Title + subtitle */}
       <div className="title-section">
-        <h2 className="dls-text-heading-md dls-mb-1">Transaction Codes</h2>
-        <p className="subtitle dls-text-body-sm dls-text-color-secondary dls-italic dls-m-0">
+        <h2 className="margin-0 font-weight-bold">Transaction Codes</h2>
+        <p className="subtitle text-neutral font-italic margin-0">
           Enterprise Catalog Business Term Definition: DEFINITION
         </p>
       </div>
 
       {/* Controls (source filter, download, columns) */}
-      <div className="header-controls dls-flex dls-flex-align-center dls-flex-gap-2">
+      <div className="header-controls flex flex-align-center stack-1-r">
         {/* Source Filter */}
         <select
-          className="source-filter dls-form-control dls-font-size-sm dls-border dls-border-radius-sm dls-bg-white"
+          className="source-filter border pad-1-t-b pad-1-l-r"
           value={sourceFilterMode}
           onChange={(e) => setSourceFilterMode(e.target.value)}
         >
@@ -25,58 +25,61 @@ return (
         </select>
 
         {/* Download */}
-        <div className="download-container dls-position-relative" ref={downloadMenuRef}>
+        <div className="download-container position-relative" ref={downloadMenuRef}>
           <button
-            className="download-btn dls-btn dls-btn-secondary dls-font-size-sm dls-flex dls-flex-align-center dls-flex-gap-1"
+            className="download-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
             onClick={() => setShowDownloadMenu(!showDownloadMenu)}
           >
             <span className="download-icon">⬇</span>
-            Download
+            <span className="margin-1-l">Download</span>
           </button>
 
           {showDownloadMenu && (
-            <div className="download-dropdown dls-position-absolute dls-right-0 dls-top-full dls-mt-1 dls-bg-white dls-border dls-border-radius-sm dls-shadow-md dls-min-w-40 dls-z-10">
-              <div className="dropdown-header dls-font-weight-semibold dls-font-size-sm dls-p-2 dls-border-b">
+            <div className="download-dropdown position-absolute-tr margin-1-t border bg-none">
+              <div className="dropdown-header font-weight-bold pad-1 border-bottom">
                 Export Format
               </div>
 
               <button
-                className="download-option dls-w-100 dls-text-left dls-btn-reset dls-p-2 dls-font-size-sm dls-flex dls-flex-align-center dls-flex-gap-1 dls-hover-bg-subtle"
+                className="download-option display-block pad-1 text-align-left border-0"
                 onClick={downloadAsExcel}
               >
-                <span className="file-icon">📗</span> Download as Excel
+                <span className="file-icon">📗</span>
+                <span className="margin-1-l">Download as Excel</span>
               </button>
 
               <button
-                className="download-option dls-w-100 dls-text-left dls-btn-reset dls-p-2 dls-font-size-sm dls-flex dls-flex-align-center dls-flex-gap-1 dls-hover-bg-subtle"
+                className="download-option display-block pad-1 text-align-left border-0"
                 onClick={downloadAsCSV}
               >
-                <span className="file-icon">📊</span> Download as CSV
+                <span className="file-icon">📊</span>
+                <span className="margin-1-l">Download as CSV</span>
               </button>
 
               <button
-                className="download-option dls-w-100 dls-text-left dls-btn-reset dls-p-2 dls-font-size-sm dls-flex dls-flex-align-center dls-flex-gap-1 dls-hover-bg-subtle"
+                className="download-option display-block pad-1 text-align-left border-0"
                 onClick={downloadAsJSON}
               >
-                <span className="file-icon">📄</span> Download as JSON
+                <span className="file-icon">📄</span>
+                <span className="margin-1-l">Download as JSON</span>
               </button>
             </div>
           )}
         </div>
 
         {/* Column Toggle */}
-        <div className="column-toggle-container dls-position-relative" ref={columnToggleRef}>
+        <div className="column-toggle-container position-relative" ref={columnToggleRef}>
           <button
-            className="column-toggle-btn dls-btn dls-btn-secondary dls-font-size-sm dls-flex dls-flex-align-center dls-flex-gap-1"
+            className="column-toggle-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
             onClick={() => setShowColumnToggle(!showColumnToggle)}
           >
             <span className="toggle-icon">⚙️</span>
-            Columns
+            <span className="margin-1-l">Columns</span>
           </button>
 
           {showColumnToggle && (
-            <div className="column-toggle-dropdown dls-position-absolute dls-right-0 dls-top-full dls-mt-1 dls-bg-white dls-border dls-border-radius-sm dls-shadow-md dls-min-w-56 dls-z-10">
-              <div className="dropdown-header dls-font-weight-semibold dls-font-size-sm dls-p-2 dls-border-b">
+            <div className="column-toggle-dropdown position-absolute-tr margin-1-t border bg-none">
+              <div className="dropdown-header font-weight-bold pad-1 border-bottom">
                 Show/Hide Columns
               </div>
 
@@ -85,26 +88,23 @@ return (
                   return (
                     <label
                       key={key}
-                      className="column-checkbox dls-flex dls-flex-align-center dls-px-3 dls-py-2 dls-cursor-not-allowed dls-text-color-secondary"
+                      className="column-checkbox display-block pad-1 text-neutral"
                       title="This column is universal and cannot be hidden"
                     >
-                      <input type="checkbox" checked readOnly disabled className="dls-mr-2" />
-                      <span className="checkbox-label dls-font-size-sm">{label}</span>
+                      <input type="checkbox" checked readOnly disabled className="margin-1-r" />
+                      <span className="checkbox-label">{label}</span>
                     </label>
                   );
                 }
                 return (
-                  <label
-                    key={key}
-                    className="column-checkbox dls-flex dls-flex-align-center dls-px-3 dls-py-2 dls-hover-bg-subtle"
-                  >
+                  <label key={key} className="column-checkbox display-block pad-1">
                     <input
                       type="checkbox"
-                      className="dls-mr-2"
+                      className="margin-1-r"
                       checked={!!visibleColumns[key]}
                       onChange={() => toggleColumn(key)}
                     />
-                    <span className="checkbox-label dls-font-size-sm">{label}</span>
+                    <span className="checkbox-label">{label}</span>
                   </label>
                 );
               })}
@@ -115,19 +115,29 @@ return (
     </div>
 
     {/* Table */}
-    <table className="table dls-w-100 dls-border-collapse dls-table dls-table-striped">
+    <table className="table table-striped border width-full">
       <thead>
         <tr>
           {activeKeys.map((key) => {
             const label = activeColumnLabels[key];
-            if (key === 'marketLocation') return (
-              <th scope="col" key={key} className="dls-bg-brand dls-text-inverse dls-font-weight-semibold dls-font-size-sm dls-text-uppercase dls-letter-spacing-sm dls-px-3 dls-py-2">
-                {label}
-              </th>
-            );
+            if (key === 'marketLocation') {
+              return (
+                <th
+                  scope="col"
+                  key={key}
+                  className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b"
+                >
+                  {label}
+                </th>
+              );
+            }
             if (!visibleColumns[key]) return null;
             return (
-              <th scope="col" key={key} className="dls-bg-brand dls-text-inverse dls-font-weight-semibold dls-font-size-sm dls-text-uppercase dls-letter-spacing-sm dls-px-3 dls-py-2">
+              <th
+                scope="col"
+                key={key}
+                className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b"
+              >
                 {label}
               </th>
             );
@@ -135,67 +145,67 @@ return (
         </tr>
       </thead>
 
-      <tbody>
-        {/* Filter row */}
-        <tr className="filter-row">
-          {activeKeys.map((key) => {
-            const cellClass =
-              "dls-bg-subtle dls-p-1 dls-position-relative dls-border";
-            if (key === 'marketLocation') {
-              return (
-                <td key={`filter-${key}`} className={cellClass}>
-                  {renderFilterInput('marketLocation', 'Filter Market Location', {
-                    inputClass: 'dls-form-control dls-font-size-sm',
-                    wrapClass: 'dls-position-relative dls-w-100'
-                  })}
-                </td>
-              );
-            }
+    <tbody>
+      {/* Filter row */}
+      <tr className="filter-row">
+        {activeKeys.map((key) => {
+          const cellClass = "pad-1 position-relative border";
+          if (key === 'marketLocation') {
             return (
               <td key={`filter-${key}`} className={cellClass}>
-                {renderFilterInput(key, `Filter ${activeColumnLabels[key]}`, {
-                  inputClass: 'dls-form-control dls-font-size-sm',
-                  wrapClass: 'dls-position-relative dls-w-100',
-                  listClass: 'dls-position-absolute dls-left-0 dls-right-0 dls-top-full dls-bg-white dls-border dls-max-h-56 dls-overflow-auto dls-z-20'
+                {renderFilterInput('marketLocation', 'Filter Market Location', {
+                  inputClass: 'width-full',
+                  wrapClass: 'position-relative width-full'
                 })}
               </td>
             );
+          }
+          return (
+            <td key={`filter-${key}`} className={cellClass}>
+              {renderFilterInput(key, `Filter ${activeColumnLabels[key]}`, {
+                inputClass: 'width-full',
+                wrapClass: 'position-relative width-full',
+                listClass: 'position-absolute width-full'
+              })}
+            </td>
+          );
+        })}
+      </tr>
+
+      {/* Data rows */}
+      {currentData.map((row, idx) => (
+        <tr key={`trans-code-${startIndex + idx}`}>
+          {activeKeys.map((key) => {
+            const val = (row[key] || '').toString();
+            if (key === 'marketLocation') {
+              return <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">{val || '-'}</td>;
+            }
+            if (!visibleColumns[key]) return null;
+            return <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">{val}</td>;
           })}
         </tr>
-
-        {/* Data rows */}
-        {currentData.map((row, idx) => (
-          <tr key={`trans-code-${startIndex + idx}`}>
-            {activeKeys.map((key) => {
-              const val = (row[key] || '').toString();
-              if (key === 'marketLocation')
-                return <td key={`${idx}-${key}`} className="dls-px-3 dls-py-2 dls-border">{val || '-'}</td>;
-              if (!visibleColumns[key]) return null;
-              return <td key={`${idx}-${key}`} className="dls-px-3 dls-py-2 dls-border">{val}</td>;
-            })}
-          </tr>
-        ))}
-      </tbody>
+      ))}
+    </tbody>
     </table>
 
     {/* Empty state */}
     {!filteredData.length && (
-      <div className="no-transactions-found dls-mt-2 dls-text-color-secondary dls-italic">
+      <div className="no-transactions-found margin-1-t text-neutral font-italic">
         No Transaction Codes To Be Displayed
       </div>
     )}
 
     {/* Pagination */}
     {filteredData.length > 0 && (
-      <div className="pagination-container dls-flex dls-flex-justify-between dls-flex-align-center dls-mt-3 dls-flex-wrap dls-flex-gap-2">
-        <div className="showing-info dls-text-body-sm">
+      <div className="pagination-container flex flex-justify-between flex-align-center margin-2-t stack-1-r">
+        <div className="showing-info">
           Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
         </div>
 
         {totalPages > 1 && (
-          <div className="pagination-controls dls-flex dls-flex-align-center dls-flex-gap-1">
+          <div className="pagination-controls flex">
             <button
-              className="page-btn dls-btn dls-btn-secondary dls-btn-sm"
+              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
             >
@@ -203,7 +213,7 @@ return (
             </button>
 
             <button
-              className="page-btn dls-btn dls-btn-secondary dls-btn-sm"
+              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
@@ -212,12 +222,12 @@ return (
 
             {getPageNumbers().map((page, index) =>
               page === '...' ? (
-                <span key={`ellipsis-${index}`} className="page-ellipsis dls-px-1 dls-text-color-secondary">…</span>
+                <span key={`ellipsis-${index}`} className="page-ellipsis margin-1-l-r text-neutral">…</span>
               ) : (
                 <button
                   key={`page-${page}`}
-                  className={`page-btn dls-btn dls-btn-sm ${
-                    currentPage === page ? 'dls-btn-brand' : 'dls-btn-secondary'
+                  className={`page-btn border pad-1-l-r pad-1-t-b margin-0 ${
+                    currentPage === page ? 'font-weight-bold' : ''
                   }`}
                   onClick={() => setCurrentPage(page)}
                 >
@@ -227,7 +237,7 @@ return (
             )}
 
             <button
-              className="page-btn dls-btn dls-btn-secondary dls-btn-sm"
+              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
@@ -235,7 +245,7 @@ return (
             </button>
 
             <button
-              className="page-btn dls-btn dls-btn-secondary dls-btn-sm"
+              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
             >
