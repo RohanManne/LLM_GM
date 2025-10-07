@@ -34,7 +34,13 @@ return (
           </button>
 
           {showDownloadMenu && (
-            <div className="position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-10">
+            <div
+              className="position-absolute-tr margin-1-t border border-dark pad-1"
+              style={{
+                zIndex: 999,
+                backgroundColor: 'white',
+              }}
+            >
               <div className="font-weight-bold pad-1 border-bottom margin-0">
                 Export Format
               </div>
@@ -63,13 +69,23 @@ return (
           </button>
 
           {showColumnToggle && (
-            <div className="position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-10">
+            <div
+              className="position-absolute-tr margin-1-t border border-dark pad-1"
+              style={{
+                zIndex: 999,
+                backgroundColor: 'white',
+              }}
+            >
               <div className="font-weight-bold pad-1 border-bottom margin-0">
                 Show/Hide Columns
               </div>
               {Object.entries(activeColumnLabels).map(([key, label]) =>
                 key === 'marketLocation' ? (
-                  <label key={key} className="display-block pad-1 text-neutral" title="This column is universal and cannot be hidden">
+                  <label
+                    key={key}
+                    className="display-block pad-1 text-neutral"
+                    title="This column is universal and cannot be hidden"
+                  >
                     <input type="checkbox" checked readOnly disabled className="margin-1-r" />
                     {label}
                   </label>
@@ -122,7 +138,10 @@ return (
                     placeholder={key === 'marketLocation' ? 'Filter Market Location' : `Filter ${activeColumnLabels[key]}`}
                   />
                   {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
-                    <div className="border width-full margin-1-t position-absolute bg-white z-10">
+                    <div
+                      className="border width-full margin-1-t position-absolute bg-white"
+                      style={{ zIndex: 999 }}
+                    >
                       {(dropdownSuggestions[key] || []).map((s, i) => (
                         <div key={i} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
                           {s}
