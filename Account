@@ -2,7 +2,6 @@ return (
   <div className="transaction-codes-container pad-2 border">
     {/* Header */}
     <div className="header-section flex flex-justify-between flex-align-end margin-2-b pad-1-b border-bottom">
-      {/* Title + subtitle */}
       <div className="title-section">
         <h2 className="margin-0 font-weight-bold">Transaction Codes</h2>
         <p className="subtitle text-neutral font-italic margin-0">
@@ -10,14 +9,12 @@ return (
         </p>
       </div>
 
-      {/* Controls */}
       <div className="header-controls flex flex-align-center stack-1-r">
         {/* Source Filter */}
         <select
           className="source-filter border pad-1-t-b pad-1-l-r"
           value={sourceFilterMode}
           onChange={(e) => setSourceFilterMode(e.target.value)}
-          aria-label="Filter by source"
         >
           <option value="all">All Sources</option>
           <option value="globestar">Globestar Only</option>
@@ -37,27 +34,24 @@ return (
           </button>
 
           {showDownloadMenu && (
-            <div className="download-dropdown position-absolute-tr margin-1-t border border-dark pad-1">
+            <div className="download-dropdown position-absolute-tr margin-1-t border pad-1 layer-3 bg-white">
               <div className="dropdown-header font-weight-bold border-bottom pad-1 margin-0">
                 Export Format
               </div>
-
               <button
-                className="download-option display-block pad-1 text-align-left border-0 width-full"
+                className="display-block pad-1 text-align-left border-0 width-full"
                 onClick={downloadAsExcel}
               >
                 📗 <span className="margin-1-l">Download as Excel</span>
               </button>
-
               <button
-                className="download-option display-block pad-1 text-align-left border-0 width-full"
+                className="display-block pad-1 text-align-left border-0 width-full"
                 onClick={downloadAsCSV}
               >
                 📊 <span className="margin-1-l">Download as CSV</span>
               </button>
-
               <button
-                className="download-option display-block pad-1 text-align-left border-0 width-full"
+                className="display-block pad-1 text-align-left border-0 width-full"
                 onClick={downloadAsJSON}
               >
                 📄 <span className="margin-1-l">Download as JSON</span>
@@ -78,7 +72,7 @@ return (
           </button>
 
           {showColumnToggle && (
-            <div className="column-toggle-dropdown position-absolute-tr margin-1-t border border-dark pad-1">
+            <div className="column-toggle-dropdown position-absolute-tr margin-1-t border pad-1 layer-3 bg-white">
               <div className="dropdown-header font-weight-bold border-bottom pad-1 margin-0">
                 Show/Hide Columns
               </div>
@@ -150,10 +144,9 @@ return (
                       ? 'Filter Market Location'
                       : `Filter ${activeColumnLabels[key]}`
                   }
-                  aria-label={`Filter by ${activeColumnLabels[key]}`}
                 />
                 {activeDropdown === key && dropdownSuggestions[key].length > 0 && (
-                  <div className="border width-full margin-1-t position-absolute">
+                  <div className="border width-full margin-1-t position-absolute bg-white layer-3">
                     {dropdownSuggestions[key].map((s, idx) => (
                       <div
                         key={idx}
@@ -206,7 +199,6 @@ return (
             >
               First
             </button>
-
             <button
               className="page-btn border pad-1-l-r pad-1-t-b margin-0"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -217,11 +209,15 @@ return (
 
             {getPageNumbers().map((page, index) =>
               page === '...' ? (
-                <span key={`ellipsis-${index}`} className="margin-1-l-r text-neutral">…</span>
+                <span key={`ellipsis-${index}`} className="margin-1-l-r text-neutral">
+                  …
+                </span>
               ) : (
                 <button
                   key={`page-${page}`}
-                  className={`page-btn border pad-1-l-r pad-1-t-b margin-0 ${currentPage === page ? 'font-weight-bold' : ''}`}
+                  className={`page-btn border pad-1-l-r pad-1-t-b margin-0 ${
+                    currentPage === page ? 'font-weight-bold' : ''
+                  }`}
                   onClick={() => setCurrentPage(page)}
                 >
                   {page}
@@ -236,7 +232,6 @@ return (
             >
               Next
             </button>
-
             <button
               className="page-btn border pad-1-l-r pad-1-t-b margin-0"
               onClick={() => setCurrentPage(totalPages)}
