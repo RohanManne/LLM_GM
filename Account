@@ -1,19 +1,18 @@
 return (
   <div className="transaction-codes-container pad-2 border">
     {/* Header */}
-    <div className="header-section flex flex-justify-between flex-align-end margin-2-b pad-1-b border-bottom">
-      <div className="title-section">
+    <div className="flex flex-justify-between flex-align-end margin-2-b pad-1-b border-bottom">
+      <div>
         <h2 className="margin-0 font-weight-bold">Transaction Codes</h2>
-        <p className="subtitle text-neutral font-italic margin-0">
+        <p className="text-neutral font-italic margin-0">
           Enterprise Catalog Business Term Definition: DEFINITION
         </p>
       </div>
 
-      {/* Controls */}
-      <div className="header-controls flex flex-align-center stack-1-r">
+      <div className="flex flex-align-center stack-1-r">
         {/* Source Filter */}
         <select
-          className="source-filter border pad-1-t-b pad-1-l-r"
+          className="border pad-1-t-b pad-1-l-r"
           value={sourceFilterMode}
           onChange={(e) => setSourceFilterMode(e.target.value)}
         >
@@ -24,91 +23,68 @@ return (
         </select>
 
         {/* Download */}
-        <div className="download-container position-relative" ref={downloadMenuRef}>
+        <div className="position-relative" ref={downloadMenuRef}>
           <button
-            className="download-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
+            className="border pad-1-t-b pad-1-l-r flex flex-align-center"
             aria-expanded={showDownloadMenu}
             onClick={() => setShowDownloadMenu(!showDownloadMenu)}
           >
-            <span className="download-icon">⬇</span>
+            <span>⬇</span>
             <span className="margin-1-l">Download</span>
           </button>
 
           {showDownloadMenu && (
-            <div className="download-dropdown position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-30 z-20 z-10">
-              <div className="dropdown-header font-weight-bold pad-1 border-bottom margin-0">
+            <div className="position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-10">
+              <div className="font-weight-bold pad-1 border-bottom margin-0">
                 Export Format
               </div>
-
-              <button
-                className="download-option display-block pad-1 text-align-left border-0"
-                onClick={downloadAsExcel}
-              >
-                <span className="file-icon">📗</span>
-                <span className="margin-1-l">Download as Excel</span>
+              <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsExcel}>
+                <span className="margin-1-r">📗</span> Download as Excel
               </button>
-
-              <button
-                className="download-option display-block pad-1 text-align-left border-0"
-                onClick={downloadAsCSV}
-              >
-                <span className="file-icon">📊</span>
-                <span className="margin-1-l">Download as CSV</span>
+              <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsCSV}>
+                <span className="margin-1-r">📊</span> Download as CSV
               </button>
-
-              <button
-                className="download-option display-block pad-1 text-align-left border-0"
-                onClick={downloadAsJSON}
-              >
-                <span className="file-icon">📄</span>
-                <span className="margin-1-l">Download as JSON</span>
+              <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsJSON}>
+                <span className="margin-1-r">📄</span> Download as JSON
               </button>
             </div>
           )}
         </div>
 
         {/* Column Toggle */}
-        <div className="column-toggle-container position-relative" ref={columnToggleRef}>
+        <div className="position-relative" ref={columnToggleRef}>
           <button
-            className="column-toggle-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
+            className="border pad-1-t-b pad-1-l-r flex flex-align-center"
             aria-expanded={showColumnToggle}
             onClick={() => setShowColumnToggle(!showColumnToggle)}
           >
-            <span className="toggle-icon">⚙️</span>
+            <span>⚙️</span>
             <span className="margin-1-l">Columns</span>
           </button>
 
           {showColumnToggle && (
-            <div className="column-toggle-dropdown position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-30 z-20 z-10">
-              <div className="dropdown-header font-weight-bold pad-1 border-bottom margin-0">
+            <div className="position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-10">
+              <div className="font-weight-bold pad-1 border-bottom margin-0">
                 Show/Hide Columns
               </div>
-
-              {Object.entries(activeColumnLabels).map(([key, label]) => {
-                if (key === 'marketLocation') {
-                  return (
-                    <label
-                      key={key}
-                      className="column-checkbox display-block pad-1 text-neutral"
-                      title="This column is universal and cannot be hidden"
-                    >
-                      <input type="checkbox" checked readOnly disabled className="margin-1-r" />
-                      <span className="checkbox-label">{label}</span>
-                    </label>
-                  );
-                }
-                return (
-                  <label key={key} className="column-checkbox display-block pad-1">
+              {Object.entries(activeColumnLabels).map(([key, label]) =>
+                key === 'marketLocation' ? (
+                  <label key={key} className="display-block pad-1 text-neutral" title="This column is universal and cannot be hidden">
+                    <input type="checkbox" checked readOnly disabled className="margin-1-r" />
+                    {label}
+                  </label>
+                ) : (
+                  <label key={key} className="display-block pad-1">
                     <input
                       type="checkbox"
                       className="margin-1-r"
                       checked={!!visibleColumns[key]}
                       onChange={() => toggleColumn(key)}
                     />
-                    <span className="checkbox-label">{label}</span>
+                    {label}
                   </label>
-                );
-              })}
+                )
+              )}
             </div>
           )}
         </div>
@@ -119,107 +95,98 @@ return (
     <table className="table table-striped border width-full">
       <thead>
         <tr>
-          {visibleKeys.map((key) => (
-            <th
-              scope="col"
-              key={key}
-              className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b"
-            >
-              {activeColumnLabels[key]}
-            </th>
-          ))}
+          {Object.keys(activeColumnLabels)
+            .filter((k) => k === 'marketLocation' || visibleColumns[k])
+            .map((key) => (
+              <th key={key} className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b">
+                {activeColumnLabels[key]}
+              </th>
+            ))}
         </tr>
       </thead>
 
       <tbody>
-        {/* Filter row */}
+        {/* Filter Row */}
         <tr className="filter-row">
-          {visibleKeys.map((key) => (
-            <td key={`filter-${key}`} className="pad-1 position-relative border">
-              <div
-                className="position-relative width-full"
-                ref={(el) => (dropdownRefs.current[key] = el)}
-              >
-                <input
-                  type="text"
-                  className="width-full border pad-1"
-                  value={inputValues[key] || ''}
-                  onChange={(e) => handleFilterChange(key, e.target.value)}
-                  onFocus={() => handleInputFocus(key)}
-                  placeholder={
-                    key === 'marketLocation'
-                      ? 'Filter Market Location'
-                      : `Filter ${activeColumnLabels[key]}`
-                  }
-                />
-                {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
-                  <div className="border width-full margin-1-t position-absolute bg-white z-30 z-20 z-10">
-                    {dropdownSuggestions[key].map((s, idx) => (
-                      <div key={idx} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
-                        {s}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </td>
-          ))}
-        </tr>
-
-        {/* Data rows */}
-        {currentData.map((row, idx) => (
-          <tr key={`trans-code-${startIndex + idx}`}>
-            {visibleKeys.map((key) => (
-              <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
-                {(row[key] || '').toString() || (key === 'marketLocation' ? '-' : '')}
+          {Object.keys(activeColumnLabels)
+            .filter((k) => k === 'marketLocation' || visibleColumns[k])
+            .map((key) => (
+              <td key={`filter-${key}`} className="pad-1 position-relative border">
+                <div className="position-relative width-full" ref={(el) => (dropdownRefs.current[key] = el)}>
+                  <input
+                    type="text"
+                    className="width-full border pad-1"
+                    value={inputValues[key] || ''}
+                    onChange={(e) => handleFilterChange(key, e.target.value)}
+                    onFocus={() => handleInputFocus(key)}
+                    placeholder={key === 'marketLocation' ? 'Filter Market Location' : `Filter ${activeColumnLabels[key]}`}
+                  />
+                  {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
+                    <div className="border width-full margin-1-t position-absolute bg-white z-10">
+                      {(dropdownSuggestions[key] || []).map((s, i) => (
+                        <div key={i} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </td>
             ))}
+        </tr>
+
+        {/* Data Rows */}
+        {currentData.map((row, idx) => (
+          <tr key={`row-${idx}`}>
+            {Object.keys(activeColumnLabels)
+              .filter((k) => k === 'marketLocation' || visibleColumns[k])
+              .map((key) => (
+                <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
+                  {row[key] || (key === 'marketLocation' ? '-' : '')}
+                </td>
+              ))}
           </tr>
         ))}
       </tbody>
     </table>
 
-    {/* Empty state */}
+    {/* Empty State */}
     {!filteredData.length && (
-      <div className="margin-1-t text-neutral font-italic">
-        No Transaction Codes To Be Displayed
-      </div>
+      <div className="margin-1-t text-neutral font-italic">No Transaction Codes To Be Displayed</div>
     )}
 
     {/* Pagination */}
     {filteredData.length > 0 && (
-      <div className="pagination-container flex flex-justify-between flex-align-center margin-2-t stack-1-r">
+      <div className="flex flex-justify-between flex-align-center margin-2-t stack-1-r">
         <div>
           Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
         </div>
 
         {totalPages > 1 && (
-          <div className="pagination-controls flex">
-            <button className="page-btn border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
+          <div className="flex">
+            <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>
               First
             </button>
-            <button className="page-btn border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+            <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
               Previous
             </button>
-
-            {getPageNumbers().map((page, index) =>
-              page === '...' ? (
-                <span key={`ellipsis-${index}`} className="page-ellipsis margin-1-l-r text-neutral">…</span>
+            {getPageNumbers().map((p, i) =>
+              p === '...' ? (
+                <span key={i} className="margin-1-l-r text-neutral">…</span>
               ) : (
                 <button
-                  key={`page-${page}`}
-                  className={`page-btn border pad-1-l-r pad-1-t-b margin-0 ${currentPage === page ? 'font-weight-bold' : ''}`}
-                  onClick={() => setCurrentPage(page)}
+                  key={p}
+                  className={`border pad-1-l-r pad-1-t-b margin-0 ${currentPage === p ? 'font-weight-bold' : ''}`}
+                  onClick={() => setCurrentPage(p)}
                 >
-                  {page}
+                  {p}
                 </button>
               )
             )}
-
-            <button className="page-btn border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+            <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
               Next
             </button>
-            <button className="page-btn border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
+            <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>
               Last
             </button>
           </div>
