@@ -9,6 +9,7 @@ return (
         </p>
       </div>
 
+      {/* Controls */}
       <div className="header-controls flex flex-align-center stack-1-r">
         {/* Source Filter */}
         <select
@@ -34,18 +35,33 @@ return (
           </button>
 
           {showDownloadMenu && (
-            <div className="download-dropdown position-absolute-tr margin-1-t border pad-1 bg-white z-30 z-20 z-10 layer-3 layer-2 layer-foreground">
-              <div className="dropdown-header font-weight-bold border-bottom pad-1 margin-0">
+            <div className="download-dropdown position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-30 z-20 z-10">
+              <div className="dropdown-header font-weight-bold pad-1 border-bottom margin-0">
                 Export Format
               </div>
-              <button className="display-block pad-1 text-align-left border-0 width-full" onClick={downloadAsExcel}>
-                📗 <span className="margin-1-l">Download as Excel</span>
+
+              <button
+                className="download-option display-block pad-1 text-align-left border-0"
+                onClick={downloadAsExcel}
+              >
+                <span className="file-icon">📗</span>
+                <span className="margin-1-l">Download as Excel</span>
               </button>
-              <button className="display-block pad-1 text-align-left border-0 width-full" onClick={downloadAsCSV}>
-                📊 <span className="margin-1-l">Download as CSV</span>
+
+              <button
+                className="download-option display-block pad-1 text-align-left border-0"
+                onClick={downloadAsCSV}
+              >
+                <span className="file-icon">📊</span>
+                <span className="margin-1-l">Download as CSV</span>
               </button>
-              <button className="display-block pad-1 text-align-left border-0 width-full" onClick={downloadAsJSON}>
-                📄 <span className="margin-1-l">Download as JSON</span>
+
+              <button
+                className="download-option display-block pad-1 text-align-left border-0"
+                onClick={downloadAsJSON}
+              >
+                <span className="file-icon">📄</span>
+                <span className="margin-1-l">Download as JSON</span>
               </button>
             </div>
           )}
@@ -63,8 +79,8 @@ return (
           </button>
 
           {showColumnToggle && (
-            <div className="column-toggle-dropdown position-absolute-tr margin-1-t border pad-1 bg-white z-30 z-20 z-10 layer-3 layer-2 layer-foreground">
-              <div className="dropdown-header font-weight-bold border-bottom pad-1 margin-0">
+            <div className="column-toggle-dropdown position-absolute-tr margin-1-t border border-dark pad-1 bg-white z-30 z-20 z-10">
+              <div className="dropdown-header font-weight-bold pad-1 border-bottom margin-0">
                 Show/Hide Columns
               </div>
 
@@ -73,23 +89,23 @@ return (
                   return (
                     <label
                       key={key}
-                      className="display-block pad-1 text-neutral"
+                      className="column-checkbox display-block pad-1 text-neutral"
                       title="This column is universal and cannot be hidden"
                     >
                       <input type="checkbox" checked readOnly disabled className="margin-1-r" />
-                      {label}
+                      <span className="checkbox-label">{label}</span>
                     </label>
                   );
                 }
                 return (
-                  <label key={key} className="display-block pad-1">
+                  <label key={key} className="column-checkbox display-block pad-1">
                     <input
                       type="checkbox"
                       className="margin-1-r"
                       checked={!!visibleColumns[key]}
                       onChange={() => toggleColumn(key)}
                     />
-                    {label}
+                    <span className="checkbox-label">{label}</span>
                   </label>
                 );
               })}
@@ -100,14 +116,14 @@ return (
     </div>
 
     {/* Table */}
-    <table className="width-full border">
+    <table className="table table-striped border width-full">
       <thead>
         <tr>
           {visibleKeys.map((key) => (
             <th
               scope="col"
               key={key}
-              className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b border-bottom"
+              className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b"
             >
               {activeColumnLabels[key]}
             </th>
@@ -127,7 +143,7 @@ return (
                 <input
                   type="text"
                   className="width-full border pad-1"
-                  value={inputValues[key]}
+                  value={inputValues[key] || ''}
                   onChange={(e) => handleFilterChange(key, e.target.value)}
                   onFocus={() => handleInputFocus(key)}
                   placeholder={
@@ -136,8 +152,8 @@ return (
                       : `Filter ${activeColumnLabels[key]}`
                   }
                 />
-                {activeDropdown === key && dropdownSuggestions[key].length > 0 && (
-                  <div className="border width-full margin-1-t position-absolute bg-white z-30 z-20 z-10 layer-3 layer-2 layer-foreground">
+                {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
+                  <div className="border width-full margin-1-t position-absolute bg-white z-30 z-20 z-10">
                     {dropdownSuggestions[key].map((s, idx) => (
                       <div key={idx} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
                         {s}
@@ -188,7 +204,7 @@ return (
 
             {getPageNumbers().map((page, index) =>
               page === '...' ? (
-                <span key={`ellipsis-${index}`} className="margin-1-l-r text-neutral">…</span>
+                <span key={`ellipsis-${index}`} className="page-ellipsis margin-1-l-r text-neutral">…</span>
               ) : (
                 <button
                   key={`page-${page}`}
