@@ -1,294 +1,693 @@
-return (
-  <div className="transaction-codes-container pad-2 border">
-    {/* Header */}
-    <div className="header-section flex flex-justify-between flex-align-end margin-2-b pad-1-b border-bottom">
-      {/* Title + subtitle */}
-      <div className="title-section">
-        <h2 className="margin-0 font-weight-bold">Transaction Codes</h2>
-        <p className="subtitle text-neutral font-italic margin-0">
-          Enterprise Catalog Business Term Definition: DEFINITION
-        </p>
-      </div>
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import transactionData from './Triumph_Trans_Codes.json';
+import * as XLSX from 'xlsx';
 
-      {/* Controls */}
-      <div className="header-controls flex flex-align-center stack-1-r">
-        {/* Source Filter */}
-        <select
-          className="source-filter border pad-1-t-b pad-1-l-r"
-          value={sourceFilterMode}
-          onChange={(e) => setSourceFilterMode(e.target.value)}
+const TransactionCodes = () => {
+  const [filters, setFilters] = useState({
+    name: '',
+    blockCode1: '',
+    blockCode2: '',
+    marketLocation: '',
+    batchCode: '',
+    subCode: '',
+    value: '',
+    description: '',
+    source: '',
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
+
+  // Column visibility (marketLocation is universal; ignore toggle for it)
+  const [visibleColumns, setVisibleColumns] = useState({
+    name: true,
+    blockCode1: true,
+    blockCode2: true,
+    batchCode: true,
+    subCode: true,
+    value: true,
+    description: true,
+    source: true,
+  });
+
+  const [showColumnToggle, setShowColumnToggle] = useState(false);
+  const columnToggleRef = useRef(null);
+
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadMenuRef = useRef(null);
+
+  // Source filter mode: 'all' | 'globestar' | 'triumph' | 'cars'
+  const [sourceFilterMode, setSourceFilterMode] = useState('all');
+
+  // Labels by mode (order matters)
+  const columnLabelsAll = {
+    name: 'Field Name',
+    blockCode1: 'Block Code 1',
+    blockCode2: 'Block Code 2',
+    marketLocation: 'Market Location',
+    batchCode: 'Batch Code',
+    subCode: 'Sub Code',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
+
+  const columnLabelsGlobestar = {
+    name: 'Field Name',
+    blockCode1: 'Block Code 1',
+    blockCode2: 'Block Code 2',
+    marketLocation: 'Market Location',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
+
+  const columnLabelsTriumph = {
+    name: 'Field Name',
+    marketLocation: 'Market Location',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
+
+  const columnLabelsCARS = {
+    name: 'Field Name',
+    marketLocation: 'Market Location',
+    batchCode: 'Batch Code',
+    subCode: 'Sub Code',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
+
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [dropdownSuggestions, setDropdownSuggestions] = useState({
+    name: [],
+    blockCode1: [],
+    blockCode2: [],
+    marketLocation: [],
+    batchCode: [],
+    subCode: [],
+    value: [],
+    description: [],
+    source: [],
+  });
+
+  const dropdownRefs = useRef({});
+
+  // Separate input values for debouncing
+  const [inputValues, setInputValues] = useState({
+    name: '',
+    blockCode1: '',
+    blockCode2: '',
+    marketLocation: '',
+    batchCode: '',
+    subCode: '',
+    value: '',
+    description: '',
+    source: '',
+  });
+
+  // Normalize/transform data once
+  const transData = useMemo(
+    () =>
+      transactionData.Triumph_Trans_Codes.map((item) => {
+        const marketLocation =
+          item['Market Location'] ??
+          item['Market location'] ??
+          item['MarketLocation'] ??
+          item['marketLocation'] ??
+          item['market location'] ??
+          '';
+
+        const batchCode =
+          item['Batch Code'] ??
+          item['Batch code'] ??
+          item['BatchCode'] ??
+          item['batchCode'] ??
+          item['batch code'] ??
+          '';
+
+        const subCode =
+          item['Sub Code'] ??
+          item['Sub code'] ??
+          item['SubCode'] ??
+          item['subCode'] ??
+          item['sub code'] ??
+          '';
+
+        return {
+          name: item['Field Name'] || '',
+          blockCode1: item['Block Code 1'] || '',
+          blockCode2: item['Block Code 2'] || '',
+          marketLocation,
+          batchCode,
+          subCode,
+          value: item['Field Value'] || '',
+          description: item['Field Description'] || '',
+          source: item['System Source Name'] || '',
+        };
+      }),
+    []
+  );
+
+  // Unique values for suggestions
+  const uniqueValues = useMemo(
+    () => ({
+      name: [...new Set(transData.map((i) => i.name))].filter(Boolean).sort(),
+      blockCode1: [...new Set(transData.map((i) => i.blockCode1))].filter(Boolean).sort(),
+      blockCode2: [...new Set(transData.map((i) => i.blockCode2))].filter(Boolean).sort(),
+      marketLocation: [...new Set(transData.map((i) => i.marketLocation))].filter(Boolean).sort(),
+      batchCode: [...new Set(transData.map((i) => i.batchCode))].filter(Boolean).sort(),
+      subCode: [...new Set(transData.map((i) => i.subCode))].filter(Boolean).sort(),
+      value: [...new Set(transData.map((i) => i.value))].filter(Boolean).sort(),
+      description: [...new Set(transData.map((i) => i.description))].filter(Boolean).sort(),
+      source: [...new Set(transData.map((i) => i.source))].filter(Boolean).sort(),
+    }),
+    [transData]
+  );
+
+  // Filter rows by source mode + field filters
+  const filteredData = useMemo(() => {
+    const src = (s) => (s || '').toLowerCase();
+    return transData.filter((row) => {
+      const s = src(row.source);
+
+      if (sourceFilterMode === 'globestar' && !s.includes('globestar')) return false;
+      if (sourceFilterMode === 'triumph' && !s.includes('triumph')) return false;
+      if (sourceFilterMode === 'cars' && !s.includes('cars')) return false;
+
+      return Object.entries(filters).every(([key, val]) => {
+        if (!val || !val.trim()) return true;
+        return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
+      });
+    });
+  }, [transData, filters, sourceFilterMode]);
+
+  // Pick active label set by mode
+  const activeColumnLabels = useMemo(() => {
+    switch (sourceFilterMode) {
+      case 'globestar':
+        return columnLabelsGlobestar;
+      case 'triumph':
+        return columnLabelsTriumph;
+      case 'cars':
+        return columnLabelsCARS;
+      default:
+        return columnLabelsAll; // 'all'
+    }
+  }, [sourceFilterMode]);
+
+  const activeKeys = useMemo(() => Object.keys(activeColumnLabels), [activeColumnLabels]);
+
+  // ✅ Single source of truth for what is visible (keeps header/filter/body aligned)
+  const visibleKeys = useMemo(
+    () => activeKeys.filter((k) => k === 'marketLocation' || visibleColumns[k]),
+    [activeKeys, visibleColumns]
+  );
+
+  // Pagination
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  // Reset page on filter/mode changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sourceFilterMode]);
+
+  // Debounce utility
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
+  const debouncedSetFilters = useCallback(
+    debounce((field, value) => {
+      setFilters((prev) => ({ ...prev, [field]: value }));
+    }, 300),
+    []
+  );
+
+  const handleFilterChange = (field, value) => {
+    setInputValues((prev) => ({ ...prev, [field]: value }));
+    debouncedSetFilters(field, value);
+
+    if (value.trim()) {
+      const suggestions = (uniqueValues[field] || [])
+        .filter((item) => item.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 10);
+
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
+      setActiveDropdown(field);
+    } else {
+      setActiveDropdown(null);
+    }
+  };
+
+  const handleSuggestionClick = (field, value) => {
+    setInputValues((prev) => ({ ...prev, [field]: value }));
+    setFilters((prev) => ({ ...prev, [field]: value }));
+    setActiveDropdown(null);
+  };
+
+  const handleInputFocus = (field) => {
+    if (inputValues[field] && inputValues[field].trim()) {
+      const suggestions = (uniqueValues[field] || [])
+        .filter((item) => item.toLowerCase().includes(inputValues[field].toLowerCase()))
+        .slice(0, 10);
+
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
+      setActiveDropdown(field);
+    }
+  };
+
+  const toggleColumn = (column) => {
+    if (column === 'marketLocation') return; // universal; ignore toggle
+    if (!(column in activeColumnLabels)) return; // only columns in the current mode
+    setVisibleColumns((prev) => ({ ...prev, [column]: !prev[column] }));
+  };
+
+  // ---------- Downloads ----------
+  const downloadAsJSON = () => {
+    const visibleData = filteredData.map((row) => {
+      const visibleRow = {};
+      Object.entries(activeColumnLabels).forEach(([key, label]) => {
+        if (key !== 'marketLocation' && !visibleColumns[key]) return;
+        visibleRow[label] = (row[key] || '').toString();
+      });
+      return visibleRow;
+    });
+
+    const jsonString = JSON.stringify(visibleData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setShowDownloadMenu(false);
+  };
+
+  const downloadAsCSV = () => {
+    const headers = Object.entries(activeColumnLabels)
+      .filter(([key]) => key === 'marketLocation' || visibleColumns[key])
+      .map(([, label]) => label);
+
+    let csvContent = headers.map((h) => `"${h}"`).join(',') + '\n';
+
+    filteredData.forEach((row) => {
+      const rowData = Object.keys(activeColumnLabels)
+        .filter((key) => key === 'marketLocation' || visibleColumns[key])
+        .map((key) => {
+          const value = row[key] || '';
+          const escaped = value.toString().replace(/"/g, '""');
+          return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
+        });
+
+      csvContent += rowData.join(',') + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `transaction_codes_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setShowDownloadMenu(false);
+  };
+
+  const downloadAsExcel = () => {
+    const excelData = filteredData.map((row) => {
+      const visibleRow = {};
+      Object.entries(activeColumnLabels).forEach(([key, label]) => {
+        if (key !== 'marketLocation' && !visibleColumns[key]) return;
+        visibleRow[label] = row[key] || '';
+      });
+      return visibleRow;
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    const columnWidths = Object.entries(activeColumnLabels)
+      .filter(([key]) => key === 'marketLocation' || visibleColumns[key])
+      .map(([key, label]) => ({
+        wch:
+          Math.max(
+            label.length,
+            ...filteredData.map((row) => (row[key] || '').toString().length).slice(0, 10)
+          ) + 2,
+      }));
+
+    ws['!cols'] = columnWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Transaction Codes');
+    XLSX.writeFile(wb, `transaction_codes_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    setShowDownloadMenu(false);
+  };
+
+  // Click outside handlers
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeDropdown && dropdownRefs.current[activeDropdown]) {
+        if (!dropdownRefs.current[activeDropdown].contains(event.target)) setActiveDropdown(null);
+      }
+      if (showColumnToggle && columnToggleRef.current && !columnToggleRef.current.contains(event.target)) {
+        setShowColumnToggle(false);
+      }
+      if (showDownloadMenu && downloadMenuRef.current && !downloadMenuRef.current.contains(event.target)) {
+        setShowDownloadMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown, showColumnToggle, showDownloadMenu]);
+
+  // Page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
+  // Render filter cell helper (kept; now called only for visibleKeys)
+  const renderFilterInput = (field, placeholder) => {
+    return (
+      <td key={field} className="pad-1 position-relative border">
+        <div
+          className="position-relative width-full"
+          ref={(el) => (dropdownRefs.current[field] = el)}
         >
-          <option value="all">All Sources</option>
-          <option value="globestar">Globestar Only</option>
-          <option value="triumph">Triumph Only</option>
-          <option value="cars">CARS Only</option>
-        </select>
-
-        {/* Download Menu */}
-        <div className="download-container position-relative" ref={downloadMenuRef}>
-          <button
-            className="download-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
-            onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-          >
-            <span className="download-icon">⬇</span>
-            <span className="margin-1-l">Download</span>
-          </button>
-
-          {showDownloadMenu && (
+          <input
+            type="text"
+            className="width-full border pad-1"
+            value={inputValues[field]}
+            onChange={(e) => handleFilterChange(field, e.target.value)}
+            onFocus={() => handleInputFocus(field)}
+            placeholder={placeholder}
+            aria-label={`Filter by ${activeColumnLabels[field] || field}`}
+          />
+          {activeDropdown === field && dropdownSuggestions[field].length > 0 && (
             <div
-              className="download-dropdown position-absolute-tr margin-1-t border pad-1"
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: '4px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                zIndex: 10,
-                minWidth: '190px'
-              }}
+              className="border width-full margin-1-t"
+              style={{ maxHeight: 220, overflowY: 'auto', background: '#fff', position: 'absolute', zIndex: 10 }}
             >
-              <div
-                className="dropdown-header font-weight-bold border-bottom pad-1"
-                style={{ marginBottom: '4px' }}
-              >
-                Export Format
-              </div>
-
-              <button
-                className="download-option display-block pad-1 text-align-left border-0 width-full"
-                onClick={downloadAsExcel}
-                style={{ background: 'none', cursor: 'pointer' }}
-              >
-                📗 <span className="margin-1-l">Download as Excel</span>
-              </button>
-
-              <button
-                className="download-option display-block pad-1 text-align-left border-0 width-full"
-                onClick={downloadAsCSV}
-                style={{ background: 'none', cursor: 'pointer' }}
-              >
-                📊 <span className="margin-1-l">Download as CSV</span>
-              </button>
-
-              <button
-                className="download-option display-block pad-1 text-align-left border-0 width-full"
-                onClick={downloadAsJSON}
-                style={{ background: 'none', cursor: 'pointer' }}
-              >
-                📄 <span className="margin-1-l">Download as JSON</span>
-              </button>
+              {dropdownSuggestions[field].map((suggestion, idx) => (
+                <div key={idx} className="pad-1" onClick={() => handleSuggestionClick(field, suggestion)}>
+                  {suggestion}
+                </div>
+              ))}
             </div>
           )}
         </div>
+      </td>
+    );
+  };
 
-        {/* Column Toggle */}
-        <div className="column-toggle-container position-relative" ref={columnToggleRef}>
-          <button
-            className="column-toggle-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
-            onClick={() => setShowColumnToggle(!showColumnToggle)}
+  // ============================
+  // ======== RETURN JSX ========
+  // ============================
+  return (
+    <div className="transaction-codes-container pad-2 border">
+      {/* Header */}
+      <div className="header-section flex flex-justify-between flex-align-end margin-2-b pad-1-b border-bottom">
+        {/* Title + subtitle */}
+        <div className="title-section">
+          <h2 className="margin-0 font-weight-bold">Transaction Codes</h2>
+          <p className="subtitle text-neutral font-italic margin-0">
+            Enterprise Catalog Business Term Definition: DEFINITION
+          </p>
+        </div>
+
+        {/* Controls (source filter, download, columns) */}
+        <div className="header-controls flex flex-align-center stack-1-r">
+          {/* Source Filter */}
+          <select
+            className="source-filter border pad-1-t-b pad-1-l-r"
+            value={sourceFilterMode}
+            onChange={(e) => setSourceFilterMode(e.target.value)}
+            aria-label="Filter by source"
           >
-            <span className="toggle-icon">⚙️</span>
-            <span className="margin-1-l">Columns</span>
-          </button>
+            <option value="all">All Sources</option>
+            <option value="globestar">Globestar Only</option>
+            <option value="triumph">Triumph Only</option>
+            <option value="cars">CARS Only</option>
+          </select>
 
-          {showColumnToggle && (
-            <div
-              className="column-toggle-dropdown position-absolute-tr margin-1-t border pad-1"
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: '4px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                zIndex: 10,
-                minWidth: '220px'
-              }}
+          {/* Download */}
+          <div className="download-container position-relative" ref={downloadMenuRef}>
+            <button
+              className="download-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
+              aria-expanded={showDownloadMenu}
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
             >
-              <div
-                className="dropdown-header font-weight-bold border-bottom pad-1"
-                style={{ marginBottom: '4px' }}
-              >
-                Show/Hide Columns
-              </div>
+              <span className="download-icon">⬇</span>
+              <span className="margin-1-l">Download</span>
+            </button>
 
-              {Object.entries(activeColumnLabels).map(([key, label]) => {
-                if (key === 'marketLocation') {
+            {showDownloadMenu && (
+              <div
+                className="download-dropdown position-absolute-tr margin-1-t border pad-1"
+                style={{
+                  backgroundColor: '#fff',
+                  borderRadius: '4px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 10,
+                  minWidth: '190px'
+                }}
+              >
+                <div className="dropdown-header font-weight-bold border-bottom pad-1" style={{ marginBottom: 4 }}>
+                  Export Format
+                </div>
+
+                <button
+                  className="download-option display-block pad-1 text-align-left border-0 width-full"
+                  onClick={downloadAsExcel}
+                  style={{ background: 'none', cursor: 'pointer' }}
+                >
+                  📗 <span className="margin-1-l">Download as Excel</span>
+                </button>
+
+                <button
+                  className="download-option display-block pad-1 text-align-left border-0 width-full"
+                  onClick={downloadAsCSV}
+                  style={{ background: 'none', cursor: 'pointer' }}
+                >
+                  📊 <span className="margin-1-l">Download as CSV</span>
+                </button>
+
+                <button
+                  className="download-option display-block pad-1 text-align-left border-0 width-full"
+                  onClick={downloadAsJSON}
+                  style={{ background: 'none', cursor: 'pointer' }}
+                >
+                  📄 <span className="margin-1-l">Download as JSON</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Column Toggle */}
+          <div className="column-toggle-container position-relative" ref={columnToggleRef}>
+            <button
+              className="column-toggle-btn border pad-1-t-b pad-1-l-r flex flex-align-center"
+              aria-expanded={showColumnToggle}
+              onClick={() => setShowColumnToggle(!showColumnToggle)}
+            >
+              <span className="toggle-icon">⚙️</span>
+              <span className="margin-1-l">Columns</span>
+            </button>
+
+            {showColumnToggle && (
+              <div
+                className="column-toggle-dropdown position-absolute-tr margin-1-t border pad-1"
+                style={{
+                  backgroundColor: '#fff',
+                  borderRadius: '4px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 10,
+                  minWidth: '220px'
+                }}
+              >
+                <div className="dropdown-header font-weight-bold border-bottom pad-1" style={{ marginBottom: 4 }}>
+                  Show/Hide Columns
+                </div>
+
+                {Object.entries(activeColumnLabels).map(([key, label]) => {
+                  if (key === 'marketLocation') {
+                    return (
+                      <label
+                        key={key}
+                        className="display-block pad-1 text-neutral"
+                        title="This column is universal and cannot be hidden"
+                      >
+                        <input type="checkbox" checked readOnly disabled className="margin-1-r" />
+                        {label}
+                      </label>
+                    );
+                  }
                   return (
-                    <label
-                      key={key}
-                      className="display-block pad-1 text-neutral"
-                      title="This column is universal and cannot be hidden"
-                    >
-                      <input type="checkbox" checked readOnly disabled className="margin-1-r" />
+                    <label key={key} className="display-block pad-1">
+                      <input
+                        type="checkbox"
+                        className="margin-1-r"
+                        checked={!!visibleColumns[key]}
+                        onChange={() => toggleColumn(key)}
+                      />
                       {label}
                     </label>
                   );
-                }
-                return (
-                  <label key={key} className="display-block pad-1">
-                    <input
-                      type="checkbox"
-                      className="margin-1-r"
-                      checked={!!visibleColumns[key]}
-                      onChange={() => toggleColumn(key)}
-                    />
-                    {label}
-                  </label>
-                );
-              })}
-            </div>
-          )}
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* Table */}
-    <table className="width-full border">
-      <thead>
-        <tr>
-          {activeKeys.map((key) => {
-            const label = activeColumnLabels[key];
-            if (key === 'marketLocation') {
-              return (
-                <th
-                  scope="col"
-                  key={key}
-                  className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b border-bottom"
-                >
-                  {label}
-                </th>
-              );
-            }
-            if (!visibleColumns[key]) return null;
-            return (
+      {/* Table */}
+      <table className="width-full border" style={{ tableLayout: 'fixed' }}>
+        <thead>
+          <tr>
+            {visibleKeys.map((key) => (
               <th
                 scope="col"
                 key={key}
                 className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b border-bottom"
               >
-                {label}
+                {activeColumnLabels[key]}
               </th>
-            );
-          })}
-        </tr>
-      </thead>
-
-      <tbody>
-        {/* Filter row */}
-        <tr className="filter-row">
-          {activeKeys.map((key) => {
-            const cellClass = "pad-1 position-relative border";
-            if (key === 'marketLocation') {
-              return (
-                <td key={`filter-${key}`} className={cellClass}>
-                  {renderFilterInput('marketLocation', 'Filter Market Location', {
-                    inputClass: 'width-full',
-                    wrapClass: 'position-relative width-full'
-                  })}
-                </td>
-              );
-            }
-            return (
-              <td key={`filter-${key}`} className={cellClass}>
-                {renderFilterInput(key, `Filter ${activeColumnLabels[key]}`, {
-                  inputClass: 'width-full',
-                  wrapClass: 'position-relative width-full',
-                  listClass: 'position-absolute width-full'
-                })}
-              </td>
-            );
-          })}
-        </tr>
-
-        {/* Data rows */}
-        {currentData.map((row, idx) => (
-          <tr key={`trans-code-${startIndex + idx}`}>
-            {activeKeys.map((key) => {
-              const val = (row[key] || '').toString();
-              if (key === 'marketLocation') {
-                return (
-                  <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
-                    {val || '-'}
-                  </td>
-                );
-              }
-              if (!visibleColumns[key]) return null;
-              return (
-                <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
-                  {val}
-                </td>
-              );
-            })}
+            ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
 
-    {/* Empty state */}
-    {!filteredData.length && (
-      <div className="margin-1-t text-neutral font-italic">
-        No Transaction Codes To Be Displayed
-      </div>
-    )}
-
-    {/* Pagination */}
-    {filteredData.length > 0 && (
-      <div className="pagination-container flex flex-justify-between flex-align-center margin-2-t stack-1-r">
-        <div>
-          Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of{' '}
-          {filteredData.length}
-        </div>
-
-        {totalPages > 1 && (
-          <div className="pagination-controls flex">
-            <button
-              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              First
-            </button>
-
-            <button
-              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </button>
-
-            {getPageNumbers().map((page, index) =>
-              page === '...' ? (
-                <span key={`ellipsis-${index}`} className="margin-1-l-r text-neutral">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={`page-${page}`}
-                  className={`page-btn border pad-1-l-r pad-1-t-b margin-0 ${
-                    currentPage === page ? 'font-weight-bold' : ''
-                  }`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              )
+        <tbody>
+          {/* Filter row */}
+          <tr className="filter-row">
+            {visibleKeys.map((key) =>
+              key === 'marketLocation'
+                ? renderFilterInput('marketLocation', 'Filter Market Location')
+                : renderFilterInput(key, `Filter ${activeColumnLabels[key]}`)
             )}
+          </tr>
 
-            <button
-              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </button>
+          {/* Data rows */}
+          {currentData.map((row, idx) => (
+            <tr key={`trans-code-${startIndex + idx}`}>
+              {visibleKeys.map((key) => (
+                <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
+                  {(row[key] || '').toString() || (key === 'marketLocation' ? '-' : '')}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-            <button
-              className="page-btn border pad-1-l-r pad-1-t-b margin-0"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              Last
-            </button>
+      {/* Empty state */}
+      {!filteredData.length && (
+        <div className="margin-1-t text-neutral font-italic">
+          No Transaction Codes To Be Displayed
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filteredData.length > 0 && (
+        <div className="pagination-container flex flex-justify-between flex-align-center margin-2-t stack-1-r">
+          <div>
+            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
           </div>
-        )}
-      </div>
-    )}
-  </div>
-);
+
+          {totalPages > 1 && (
+            <div className="pagination-controls flex">
+              <button
+                className="page-btn border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </button>
+
+              <button
+                className="page-btn border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+
+              {getPageNumbers().map((page, index) =>
+                page === '...' ? (
+                  <span key={`ellipsis-${index}`} className="margin-1-l-r text-neutral">…</span>
+                ) : (
+                  <button
+                    key={`page-${page}`}
+                    className={`page-btn border pad-1-l-r pad-1-t-b margin-0 ${currentPage === page ? 'font-weight-bold' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              <button
+                className="page-btn border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+
+              <button
+                className="page-btn border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TransactionCodes;
