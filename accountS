@@ -1,0 +1,472 @@
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import accountStatusData from './Triumph_Account_Status.json';
+import * as XLSX from 'xlsx';
+
+const AccountStatus = () => {
+  // ---------------- state ----------------
+  const [filters, setFilters] = useState({});
+  const [inputValues, setInputValues] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 8;
+
+  // visible columns (no marketLocation here)
+  const [visibleColumns, setVisibleColumns] = useState({
+    name: true,
+    type: true,
+    value: true,
+    reasonCode: true, // new column between value and description
+    description: true,
+    source: true,
+  });
+
+  const [showColumnToggle, setShowColumnToggle] = useState(false);
+  const columnToggleRef = useRef(null);
+
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadMenuRef = useRef(null);
+
+  const [sourceFilterMode, setSourceFilterMode] = useState('all');
+
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [dropdownSuggestions, setDropdownSuggestions] = useState({});
+  const dropdownRefs = useRef({});
+
+  // ---------------- column labels ----------------
+  const columnLabelsAll = {
+    name: 'Field Name',
+    type: 'Type Code',
+    value: 'Field Value',
+    reasonCode: 'Account Status Reason Code',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
+
+  const columnLabelsTriumph = columnLabelsAll; // same set, just allows filtering by source if you want
+
+  // ---------------- data mapping ----------------
+  const pickFirst = (obj, keys) => {
+    for (const k of keys) if (obj[k] != null) return String(obj[k]);
+    return '';
+  };
+
+  const dataRows = useMemo(() => {
+    const rows =
+      accountStatusData?.Triumph_Account_Status ||
+      accountStatusData?.AccountStatus ||
+      accountStatusData?.data ||
+      [];
+
+    return rows.map((item) => ({
+      name: pickFirst(item, ['Field Name', 'fieldName', 'Field name']),
+      type: pickFirst(item, ['Type Code', 'typeCode', 'Type code']),
+      value: pickFirst(item, ['Field Value', 'fieldValue', 'Field value']),
+      reasonCode: pickFirst(item, [
+        'Account Status Reason Code',
+        'Reason Code',
+        'accountStatusReasonCode',
+        'reasonCode',
+      ]),
+      description: pickFirst(item, ['Field Description', 'fieldDescription', 'Field description']),
+      source: pickFirst(item, ['System Source Name', 'systemSourceName', 'System source name']),
+    }));
+  }, []);
+
+  // active labels (match TransactionCodes structure)
+  const activeColumnLabels = useMemo(() => {
+    switch (sourceFilterMode) {
+      case 'triumph':
+        return columnLabelsTriumph;
+      default:
+        return columnLabelsAll;
+    }
+  }, [sourceFilterMode]);
+
+  // suggestions
+  const uniqueValues = useMemo(() => {
+    const cols = Object.keys(columnLabelsAll);
+    const result = {};
+    cols.forEach((col) => {
+      result[col] = [...new Set(dataRows.map((i) => i[col]))].filter(Boolean).sort();
+    });
+    return result;
+  }, [dataRows]);
+
+  // filtering
+  const filteredData = useMemo(() => {
+    const src = (s) => (s || '').toLowerCase();
+    return dataRows.filter((row) => {
+      const s = src(row.source);
+      if (sourceFilterMode === 'triumph' && !s.includes('triumph')) return false;
+      return Object.entries(filters).every(([key, val]) => {
+        if (!val || !val.trim()) return true;
+        return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
+      });
+    });
+  }, [dataRows, filters, sourceFilterMode]);
+
+  // pagination
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  useEffect(() => setCurrentPage(1), [filters, sourceFilterMode]);
+
+  // debounce like TransactionCodes
+  const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  };
+
+  const debouncedSetFilters = useCallback(
+    debounce((field, value) => {
+      setFilters((prev) => ({ ...prev, [field]: value }));
+    }, 300),
+    []
+  );
+
+  const handleFilterChange = (field, value) => {
+    setInputValues((prev) => ({ ...prev, [field]: value }));
+    debouncedSetFilters(field, value);
+    if (value?.trim()) {
+      const suggestions = (uniqueValues[field] || [])
+        .filter((item) => item.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 10);
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
+      setActiveDropdown(field);
+    } else {
+      setActiveDropdown(null);
+    }
+  };
+
+  const handleSuggestionClick = (field, value) => {
+    setInputValues((prev) => ({ ...prev, [field]: value }));
+    setFilters((prev) => ({ ...prev, [field]: value }));
+    setActiveDropdown(null);
+  };
+
+  const handleInputFocus = (field) => {
+    const v = inputValues[field];
+    if (v && v.trim()) {
+      const suggestions = (uniqueValues[field] || [])
+        .filter((i) => i.toLowerCase().includes(v.toLowerCase()))
+        .slice(0, 10);
+      setDropdownSuggestions((p) => ({ ...p, [field]: suggestions }));
+      setActiveDropdown(field);
+    }
+  };
+
+  const toggleColumn = (column) => {
+    if (!(column in activeColumnLabels)) return;
+    setVisibleColumns((prev) => ({ ...prev, [column]: !prev[column] }));
+  };
+
+  // downloads (same pattern)
+  const buildVisibleRows = () => {
+    return filteredData.map((row) => {
+      const visibleRow = {};
+      Object.entries(activeColumnLabels).forEach(([key, label]) => {
+        if (!visibleColumns[key]) return;
+        visibleRow[label] = row[key] || '';
+      });
+      return visibleRow;
+    });
+  };
+
+  const downloadAsJSON = () => {
+    const blob = new Blob([JSON.stringify(buildVisibleRows(), null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `account_status_${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+  };
+
+  const downloadAsCSV = () => {
+    const headers = Object.entries(activeColumnLabels)
+      .filter(([key]) => visibleColumns[key])
+      .map(([, label]) => label);
+
+    const lines = filteredData.map((row) =>
+      Object.keys(activeColumnLabels)
+        .filter((k) => visibleColumns[k])
+        .map((k) => {
+          const value = (row[k] || '').toString().replace(/"/g, '""');
+          return /[",\n]/.test(value) ? `"${value}"` : value;
+        })
+        .join(',')
+    );
+
+    const csv = [headers.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `account_status_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+  };
+
+  const downloadAsExcel = () => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(buildVisibleRows());
+    XLSX.utils.book_append_sheet(wb, ws, 'Account Status');
+    XLSX.writeFile(wb, `account_status_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  // click-away
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeDropdown && dropdownRefs.current[activeDropdown] && !dropdownRefs.current[activeDropdown].contains(event.target)) {
+        setActiveDropdown(null);
+      }
+      if (showColumnToggle && columnToggleRef.current && !columnToggleRef.current.contains(event.target)) {
+        setShowColumnToggle(false);
+      }
+      if (showDownloadMenu && downloadMenuRef.current && !downloadMenuRef.current.contains(event.target)) {
+        setShowDownloadMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown, showColumnToggle, showDownloadMenu]);
+
+  // page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
+
+  const activeKeys = Object.keys(activeColumnLabels);
+
+  // ---------------- render (strictly mirrors TransactionCodes) ----------------
+  return (
+    <div className="acct-status-code-container pad-2 border">
+      {/* Header */}
+      <div className="flex flex-justify-between flex-align-end margin-2-b pad-1-b border-bottom">
+        <div>
+          <h2 className="margin-0 font-weight-bold">Account Status Codes</h2>
+          <p className="text-neutral font-italic margin-0">
+            Enterprise Catalog Business Term Definition: DEFINITION
+          </p>
+        </div>
+
+        <div className="flex flex-align-center stack-1-r">
+          {/* Source Filter */}
+          <select
+            className="border pad-1-t-b pad-1-l-r"
+            value={sourceFilterMode}
+            onChange={(e) => setSourceFilterMode(e.target.value)}
+          >
+            <option value="all">All Sources</option>
+            <option value="triumph">Triumph Only</option>
+          </select>
+
+          {/* Download */}
+          <div className="position-relative" ref={downloadMenuRef}>
+            <button
+              className="border pad-1-t-b pad-1-l-r flex flex-align-center"
+              aria-expanded={showDownloadMenu}
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+            >
+              <span>⬇</span>
+              <span className="margin-1-l">Download</span>
+            </button>
+
+            {showDownloadMenu && (
+              <div
+                className="position-absolute-tr margin-1-t border border-dark pad-1"
+                style={{ zIndex: 999, backgroundColor: 'white' }}
+              >
+                <div className="font-weight-bold pad-1 border-bottom margin-0">Export Format</div>
+                <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsExcel}>
+                  <span className="margin-1-r">📗</span> Download as Excel
+                </button>
+                <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsCSV}>
+                  <span className="margin-1-r">📊</span> Download as CSV
+                </button>
+                <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsJSON}>
+                  <span className="margin-1-r">📄</span> Download as JSON
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Column Toggle */}
+          <div className="position-relative" ref={columnToggleRef}>
+            <button
+              className="border pad-1-t-b pad-1-l-r flex flex-align-center"
+              aria-expanded={showColumnToggle}
+              onClick={() => setShowColumnToggle(!showColumnToggle)}
+            >
+              <span>⚙️</span>
+              <span className="margin-1-l">Columns</span>
+            </button>
+
+            {showColumnToggle && (
+              <div
+                className="position-absolute-tr margin-1-t border border-dark pad-1"
+                style={{ zIndex: 999, backgroundColor: 'white' }}
+              >
+                <div className="font-weight-bold pad-1 border-bottom margin-0">Show/Hide Columns</div>
+                {Object.entries(activeColumnLabels).map(([key, label]) => (
+                  <label key={key} className="display-block pad-1">
+                    <input
+                      type="checkbox"
+                      className="margin-1-r"
+                      checked={!!visibleColumns[key]}
+                      onChange={() => toggleColumn(key)}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <table className="table table-striped border width-full">
+        <thead>
+          <tr>
+            {activeKeys
+              .filter((k) => visibleColumns[k])
+              .map((key) => (
+                <th key={key} className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b">
+                  {activeColumnLabels[key]}
+                </th>
+              ))}
+          </tr>
+        </thead>
+
+        <tbody>
+          {/* Filter Row */}
+          <tr className="filter-row">
+            {activeKeys.filter((k) => visibleColumns[k]).map((key) => (
+              <td key={`filter-${key}`} className="pad-1 position-relative border">
+                <div className="position-relative width-full" ref={(el) => (dropdownRefs.current[key] = el)}>
+                  <input
+                    type="text"
+                    className="width-full border pad-1"
+                    value={inputValues[key] || ''}
+                    onChange={(e) => handleFilterChange(key, e.target.value)}
+                    onFocus={() => handleInputFocus(key)}
+                    placeholder={`Filter ${activeColumnLabels[key]}`}
+                  />
+                  {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
+                    <div
+                      className="border width-full margin-1-t position-absolute"
+                      style={{ backgroundColor: 'white', zIndex: 999 }}
+                    >
+                      {(dropdownSuggestions[key] || []).map((s, i) => (
+                        <div key={i} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </td>
+            ))}
+          </tr>
+
+          {/* Data Rows */}
+          {currentData.map((row, idx) => (
+            <tr key={`acct-status-${startIndex + idx}`}>
+              {activeKeys.filter((k) => visibleColumns[k]).map((key) => (
+                <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
+                  {row[key] || ''}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Empty */}
+      {!filteredData.length && (
+        <div className="margin-1-t text-neutral font-italic">No Account Status Codes To Be Displayed</div>
+      )}
+
+      {/* Pagination (same &nbsp; separators) */}
+      {filteredData.length > 0 && (
+        <div className="flex flex-justify-between flex-align-center margin-2-t stack-1-r">
+          <div>
+            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex">
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </button>
+              &nbsp;
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              &nbsp;
+              {getPageNumbers().map((p, i) =>
+                p === '...' ? (
+                  <>
+                    <span key={`ellipsis-${i}`} className="text-neutral">…</span>
+                    &nbsp;
+                  </>
+                ) : (
+                  <>
+                    <button
+                      key={`page-${p}`}
+                      className={`border pad-1-l-r pad-1-t-b margin-0 ${currentPage === p ? 'font-weight-bold' : ''}`}
+                      onClick={() => setCurrentPage(p)}
+                    >
+                      {p}
+                    </button>
+                    &nbsp;
+                  </>
+                )
+              )}
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              &nbsp;
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AccountStatus;
