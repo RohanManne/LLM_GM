@@ -3,22 +3,11 @@ import transactionData from './Triumph_Trans_Codes.json';
 import * as XLSX from 'xlsx';
 
 const TransactionCodes = () => {
-  const [filters, setFilters] = useState({
-    name: '',
-    blockCode1: '',
-    blockCode2: '',
-    marketLocation: '',
-    batchCode: '',
-    subCode: '',
-    value: '',
-    description: '',
-    source: '',
-  });
-
+  const [filters, setFilters] = useState({});
+  const [inputValues, setInputValues] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
-  // Column visibility (marketLocation is always shown)
   const [visibleColumns, setVisibleColumns] = useState({
     name: true,
     blockCode1: true,
@@ -37,14 +26,10 @@ const TransactionCodes = () => {
   const downloadMenuRef = useRef(null);
 
   const [sourceFilterMode, setSourceFilterMode] = useState('all');
-
-  // Typeahead
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownSuggestions, setDropdownSuggestions] = useState({});
   const dropdownRefs = useRef({});
-  const [inputValues, setInputValues] = useState({});
 
-  // Label sets
   const columnLabelsAll = {
     name: 'Field Name',
     blockCode1: 'Block Code 1',
@@ -56,15 +41,7 @@ const TransactionCodes = () => {
     description: 'Field Description',
     source: 'System Source Name',
   };
-  const columnLabelsGlobestar = {
-    name: 'Field Name',
-    blockCode1: 'Block Code 1',
-    blockCode2: 'Block Code 2',
-    marketLocation: 'Market Location',
-    value: 'Field Value',
-    description: 'Field Description',
-    source: 'System Source Name',
-  };
+
   const columnLabelsTriumph = {
     name: 'Field Name',
     marketLocation: 'Market Location',
@@ -72,17 +49,7 @@ const TransactionCodes = () => {
     description: 'Field Description',
     source: 'System Source Name',
   };
-  const columnLabelsCARS = {
-    name: 'Field Name',
-    marketLocation: 'Market Location',
-    batchCode: 'Batch Code',
-    subCode: 'Sub Code',
-    value: 'Field Value',
-    description: 'Field Description',
-    source: 'System Source Name',
-  };
 
-  // Normalize data
   const transData = useMemo(
     () =>
       transactionData.Triumph_Trans_Codes.map((item) => ({
@@ -99,24 +66,51 @@ const TransactionCodes = () => {
     []
   );
 
-  // Unique values for suggestions
+  const activeColumnLabels = useMemo(() => {
+    switch (sourceFilterMode) {
+      case 'triumph':
+        return columnLabelsTriumph;
+      default:
+        return columnLabelsAll;
+    }
+  }, [sourceFilterMode]);
+
   const uniqueValues = useMemo(() => {
-    const keys = Object.keys(columnLabelsAll);
-    const u = {};
-    keys.forEach((k) => {
-      u[k] = [...new Set(transData.map((r) => r[k]))].filter(Boolean).sort();
+    const cols = Object.keys(columnLabelsAll);
+    const result = {};
+    cols.forEach((col) => {
+      result[col] = [...new Set(transData.map((i) => i[col]))].filter(Boolean).sort();
     });
-    return u;
+    return result;
   }, [transData]);
 
-  // Debounce
-  const debounce = (fn, ms) => {
-    let t;
+  const filteredData = useMemo(() => {
+    const src = (s) => (s || '').toLowerCase();
+    return transData.filter((row) => {
+      const s = src(row.source);
+      if (sourceFilterMode === 'triumph' && !s.includes('triumph')) return false;
+      return Object.entries(filters).every(([key, val]) => {
+        if (!val || !val.trim()) return true;
+        return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
+      });
+    });
+  }, [transData, filters, sourceFilterMode]);
+
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  useEffect(() => setCurrentPage(1), [filters, sourceFilterMode]);
+
+  const debounce = (func, wait) => {
+    let timeout;
     return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), ms);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
     };
   };
+
   const debouncedSetFilters = useCallback(
     debounce((field, value) => {
       setFilters((prev) => ({ ...prev, [field]: value }));
@@ -125,118 +119,50 @@ const TransactionCodes = () => {
   );
 
   const handleFilterChange = (field, value) => {
-    setInputValues((p) => ({ ...p, [field]: value }));
+    setInputValues((prev) => ({ ...prev, [field]: value }));
     debouncedSetFilters(field, value);
-
     if (value.trim()) {
       const suggestions = (uniqueValues[field] || [])
-        .filter((s) => s.toLowerCase().includes(value.toLowerCase()))
+        .filter((item) => item.toLowerCase().includes(value.toLowerCase()))
         .slice(0, 10);
-      setDropdownSuggestions((p) => ({ ...p, [field]: suggestions }));
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
       setActiveDropdown(field);
-    } else {
-      setActiveDropdown(null);
-    }
+    } else setActiveDropdown(null);
   };
+
   const handleSuggestionClick = (field, value) => {
-    setInputValues((p) => ({ ...p, [field]: value }));
-    setFilters((p) => ({ ...p, [field]: value }));
+    setInputValues((prev) => ({ ...prev, [field]: value }));
+    setFilters((prev) => ({ ...prev, [field]: value }));
     setActiveDropdown(null);
   };
+
   const handleInputFocus = (field) => {
-    const v = inputValues[field] || '';
-    if (v.trim()) {
+    if (inputValues[field] && inputValues[field].trim()) {
       const suggestions = (uniqueValues[field] || [])
-        .filter((s) => s.toLowerCase().includes(v.toLowerCase()))
+        .filter((item) => item.toLowerCase().includes(inputValues[field].toLowerCase()))
         .slice(0, 10);
-      setDropdownSuggestions((p) => ({ ...p, [field]: suggestions }));
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
       setActiveDropdown(field);
     }
   };
 
-  // Toggle columns (except marketLocation)
-  const toggleColumn = (key) => {
-    if (key === 'marketLocation') return;
-    setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleColumn = (column) => {
+    if (column === 'marketLocation') return;
+    if (!(column in activeColumnLabels)) return;
+    setVisibleColumns((prev) => ({ ...prev, [column]: !prev[column] }));
   };
-
-  // Active label set
-  const activeColumnLabels = useMemo(() => {
-    switch (sourceFilterMode) {
-      case 'globestar':
-        return columnLabelsGlobestar;
-      case 'triumph':
-        return columnLabelsTriumph;
-      case 'cars':
-        return columnLabelsCARS;
-      default:
-        return columnLabelsAll;
-    }
-  }, [sourceFilterMode]);
-
-  // Apply filters & source mode
-  const filteredData = useMemo(() => {
-    return transData.filter((row) => {
-      const src = row.source.toLowerCase();
-      if (sourceFilterMode === 'globestar' && !src.includes('globestar')) return false;
-      if (sourceFilterMode === 'triumph' && !src.includes('triumph')) return false;
-      if (sourceFilterMode === 'cars' && !src.includes('cars')) return false;
-
-      return Object.entries(filters).every(([k, val]) => {
-        if (!val) return true;
-        return (row[k] || '').toLowerCase().includes(val.toLowerCase());
-      });
-    });
-  }, [filters, transData, sourceFilterMode]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
-
-  useEffect(() => setCurrentPage(1), [filters, sourceFilterMode]);
-
-  // Click-away
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (showDownloadMenu && downloadMenuRef.current && !downloadMenuRef.current.contains(e.target))
-        setShowDownloadMenu(false);
-      if (showColumnToggle && columnToggleRef.current && !columnToggleRef.current.contains(e.target))
-        setShowColumnToggle(false);
-      if (activeDropdown && dropdownRefs.current[activeDropdown] && !dropdownRefs.current[activeDropdown].contains(e.target))
-        setActiveDropdown(null);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeDropdown, showColumnToggle, showDownloadMenu]);
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const max = 5;
-    if (totalPages <= max) for (let i = 1; i <= totalPages; i++) pages.push(i);
-    else if (currentPage <= 3) pages.push(1, 2, 3, 4, '...', totalPages);
-    else if (currentPage >= totalPages - 2) pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-    else pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
-    return pages;
-  };
-
-  // Only render visible columns (always include marketLocation if present in the active set)
-  const visibleKeys = Object.keys(activeColumnLabels).filter(
-    (k) => k === 'marketLocation' || visibleColumns[k]
-  );
 
   // Downloads
   const downloadAsJSON = () => {
-    const out = filteredData.map((row) => {
-      const obj = {};
-      Object.entries(activeColumnLabels).forEach(([k, label]) => {
-        if (k !== 'marketLocation' && !visibleColumns[k]) return;
-        obj[label] = row[k] || '';
+    const visibleData = filteredData.map((row) => {
+      const visibleRow = {};
+      Object.entries(activeColumnLabels).forEach(([key, label]) => {
+        if (key !== 'marketLocation' && !visibleColumns[key]) return;
+        visibleRow[label] = row[key] || '';
       });
-      return obj;
+      return visibleRow;
     });
-    const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(visibleData, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'transaction_codes.json';
@@ -245,17 +171,20 @@ const TransactionCodes = () => {
 
   const downloadAsCSV = () => {
     const headers = Object.entries(activeColumnLabels)
-      .filter(([k]) => k === 'marketLocation' || visibleColumns[k])
-      .map(([, l]) => l)
-      .join(',');
-    const rows = filteredData.map((r) =>
-      Object.keys(activeColumnLabels)
-        .filter((k) => k === 'marketLocation' || visibleColumns[k])
-        .map((k) => `"${(r[k] || '').replace(/"/g, '""')}"`)
-        .join(',')
-    );
-    const csv = [headers, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      .filter(([key]) => key === 'marketLocation' || visibleColumns[key])
+      .map(([, label]) => label);
+    const csvContent = [
+      headers.join(','),
+      ...filteredData.map((row) =>
+        headers
+          .map((label) => {
+            const key = Object.keys(activeColumnLabels).find((k) => activeColumnLabels[k] === label);
+            return (row[key] || '').replace(/"/g, '""');
+          })
+          .join(',')
+      ),
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'transaction_codes.csv';
@@ -263,19 +192,44 @@ const TransactionCodes = () => {
   };
 
   const downloadAsExcel = () => {
-    const out = filteredData.map((row) => {
-      const obj = {};
-      Object.entries(activeColumnLabels).forEach(([k, label]) => {
-        if (k !== 'marketLocation' && !visibleColumns[k]) return;
-        obj[label] = row[k] || '';
+    const visibleData = filteredData.map((row) => {
+      const visibleRow = {};
+      Object.entries(activeColumnLabels).forEach(([key, label]) => {
+        if (key !== 'marketLocation' && !visibleColumns[key]) return;
+        visibleRow[label] = row[key] || '';
       });
-      return obj;
+      return visibleRow;
     });
-    const ws = XLSX.utils.json_to_sheet(out);
     const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(visibleData);
     XLSX.utils.book_append_sheet(wb, ws, 'Transaction Codes');
     XLSX.writeFile(wb, 'transaction_codes.xlsx');
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeDropdown && dropdownRefs.current[activeDropdown] && !dropdownRefs.current[activeDropdown].contains(event.target))
+        setActiveDropdown(null);
+      if (showColumnToggle && columnToggleRef.current && !columnToggleRef.current.contains(event.target))
+        setShowColumnToggle(false);
+      if (showDownloadMenu && downloadMenuRef.current && !downloadMenuRef.current.contains(event.target))
+        setShowDownloadMenu(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown, showColumnToggle, showDownloadMenu]);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPages = 5;
+    if (totalPages <= maxPages) for (let i = 1; i <= totalPages; i++) pages.push(i);
+    else if (currentPage <= 3) pages.push(1, 2, 3, '...', totalPages);
+    else if (currentPage >= totalPages - 2) pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
+    else pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+    return pages;
+  };
+
+  const activeKeys = Object.keys(activeColumnLabels);
 
   return (
     <div className="transaction-codes-container pad-2 border">
@@ -313,7 +267,10 @@ const TransactionCodes = () => {
             </button>
 
             {showDownloadMenu && (
-              <div className="position-absolute-tr margin-1-t border border-dark pad-1 bg-white">
+              <div
+                className="position-absolute-tr margin-1-t border border-dark pad-1"
+                style={{ zIndex: 999, backgroundColor: 'white' }}
+              >
                 <div className="font-weight-bold pad-1 border-bottom margin-0">
                   Export Format
                 </div>
@@ -342,7 +299,10 @@ const TransactionCodes = () => {
             </button>
 
             {showColumnToggle && (
-              <div className="position-absolute-tr margin-1-t border border-dark pad-1 bg-white">
+              <div
+                className="position-absolute-tr margin-1-t border border-dark pad-1"
+                style={{ zIndex: 999, backgroundColor: 'white' }}
+              >
                 <div className="font-weight-bold pad-1 border-bottom margin-0">
                   Show/Hide Columns
                 </div>
@@ -374,7 +334,7 @@ const TransactionCodes = () => {
       <table className="table table-striped border width-full">
         <thead>
           <tr>
-            {visibleKeys.map((key) => (
+            {activeKeys.filter((k) => k === 'marketLocation' || visibleColumns[k]).map((key) => (
               <th key={key} className="font-weight-bold text-uppercase pad-1-l-r pad-1-t-b">
                 {activeColumnLabels[key]}
               </th>
@@ -383,8 +343,8 @@ const TransactionCodes = () => {
         </thead>
         <tbody>
           {/* Filter Row */}
-          <tr>
-            {visibleKeys.map((key) => (
+          <tr className="filter-row">
+            {activeKeys.filter((k) => k === 'marketLocation' || visibleColumns[k]).map((key) => (
               <td key={`filter-${key}`} className="pad-1 position-relative border">
                 <div className="position-relative width-full" ref={(el) => (dropdownRefs.current[key] = el)}>
                   <input
@@ -393,10 +353,17 @@ const TransactionCodes = () => {
                     value={inputValues[key] || ''}
                     onChange={(e) => handleFilterChange(key, e.target.value)}
                     onFocus={() => handleInputFocus(key)}
-                    placeholder={key === 'marketLocation' ? 'Filter Market Location' : `Filter ${activeColumnLabels[key]}`}
+                    placeholder={
+                      key === 'marketLocation'
+                        ? 'Filter Market Location'
+                        : `Filter ${activeColumnLabels[key]}`
+                    }
                   />
                   {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
-                    <div className="border width-full margin-1-t position-absolute bg-white">
+                    <div
+                      className="border width-full margin-1-t position-absolute"
+                      style={{ backgroundColor: 'white', zIndex: 999 }}
+                    >
                       {(dropdownSuggestions[key] || []).map((s, i) => (
                         <div key={i} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
                           {s}
@@ -412,7 +379,7 @@ const TransactionCodes = () => {
           {/* Data Rows */}
           {currentData.map((row, idx) => (
             <tr key={`row-${idx}`}>
-              {visibleKeys.map((key) => (
+              {activeKeys.filter((k) => k === 'marketLocation' || visibleColumns[k]).map((key) => (
                 <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
                   {row[key] || (key === 'marketLocation' ? '-' : '')}
                 </td>
@@ -422,33 +389,66 @@ const TransactionCodes = () => {
         </tbody>
       </table>
 
-      {/* Empty State */}
       {!filteredData.length && (
-        <div className="margin-1-t text-neutral font-italic">No Transaction Codes To Be Displayed</div>
+        <div className="margin-1-t text-neutral font-italic">
+          No Transaction Codes To Be Displayed
+        </div>
       )}
 
-      {/* Pagination */}
       {filteredData.length > 0 && (
         <div className="flex flex-justify-between flex-align-center margin-2-t stack-1-r">
           <div>
-            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
+            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of{' '}
+            {filteredData.length}
           </div>
 
           {totalPages > 1 && (
             <div className="flex">
-              <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}>First</button>
-              <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </button>
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
               {getPageNumbers().map((p, i) =>
                 p === '...' ? (
-                  <span key={i} className="margin-1-l-r text-neutral">…</span>
+                  <span key={i} className="margin-1-l-r text-neutral">
+                    …
+                  </span>
                 ) : (
-                  <button key={p} className={`border pad-1-l-r pad-1-t-b margin-0 ${currentPage === p ? 'font-weight-bold' : ''}`} onClick={() => setCurrentPage(p)}>
+                  <button
+                    key={p}
+                    className={`border pad-1-l-r pad-1-t-b margin-0 ${
+                      currentPage === p ? 'font-weight-bold' : ''
+                    }`}
+                    onClick={() => setCurrentPage(p)}
+                  >
                     {p}
                   </button>
                 )
               )}
-              <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
-              <button className="border pad-1-l-r pad-1-t-b margin-0" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}>Last</button>
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              <button
+                className="border pad-1-l-r pad-1-t-b margin-0"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </button>
             </div>
           )}
         </div>
