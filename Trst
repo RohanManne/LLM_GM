@@ -405,55 +405,51 @@ const TransactionCodes = () => {
           <div className="flex">
             <button
               className="border pad-1-l-r pad-1-t-b margin-0"
-              style={{ margin: '0 4px' }}
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
             >
               First
             </button>
+            &nbsp;
             <button
               className="border pad-1-l-r pad-1-t-b margin-0"
-              style={{ margin: '0 4px' }}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
               Previous
             </button>
-    
+            &nbsp;
             {getPageNumbers().map((p, i) =>
               p === '...' ? (
-                <span
-                  key={i}
-                  className="text-neutral"
-                  style={{ margin: '0 4px', alignSelf: 'center' }}
-                >
-                  …
-                </span>
+                <>
+                  <span key={i} className="text-neutral">…</span>
+                  &nbsp;
+                </>
               ) : (
-                <button
-                  key={p}
-                  className={`border pad-1-l-r pad-1-t-b margin-0 ${
-                    currentPage === p ? 'font-weight-bold' : ''
-                  }`}
-                  style={{ margin: '0 4px' }}
-                  onClick={() => setCurrentPage(p)}
-                >
-                  {p}
-                </button>
+                <>
+                  <button
+                    key={p}
+                    className={`border pad-1-l-r pad-1-t-b margin-0 ${
+                      currentPage === p ? 'font-weight-bold' : ''
+                    }`}
+                    onClick={() => setCurrentPage(p)}
+                  >
+                    {p}
+                  </button>
+                  &nbsp;
+                </>
               )
             )}
-    
             <button
               className="border pad-1-l-r pad-1-t-b margin-0"
-              style={{ margin: '0 4px' }}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
               Next
             </button>
+            &nbsp;
             <button
               className="border pad-1-l-r pad-1-t-b margin-0"
-              style={{ margin: '0 4px' }}
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
             >
