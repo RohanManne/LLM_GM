@@ -395,64 +395,74 @@ const TransactionCodes = () => {
         </div>
       )}
 
-      {filteredData.length > 0 && (
-        <div className="flex flex-justify-between flex-align-center margin-2-t stack-1-r">
-          <div>
-            Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of{' '}
-            {filteredData.length}
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex">
-              <button
-                className="border pad-1-l-r pad-1-t-b margin-0"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                First
-              </button>
-              <button
-                className="border pad-1-l-r pad-1-t-b margin-0"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-              {getPageNumbers().map((p, i) =>
-                p === '...' ? (
-                  <span key={i} className="margin-1-l-r text-neutral">
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={p}
-                    className={`border pad-1-l-r pad-1-t-b margin-0 ${
-                      currentPage === p ? 'font-weight-bold' : ''
-                    }`}
-                    onClick={() => setCurrentPage(p)}
-                  >
-                    {p}
-                  </button>
-                )
-              )}
-              <button
-                className="border pad-1-l-r pad-1-t-b margin-0"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
-              <button
-                className="border pad-1-l-r pad-1-t-b margin-0"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                Last
-              </button>
-            </div>
-          )}
+    {filteredData.length > 0 && (
+      <div className="flex flex-justify-between flex-align-center margin-2-t stack-1-r">
+        <div>
+          Showing rows {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length}
         </div>
-      )}
+    
+        {totalPages > 1 && (
+          <div className="flex">
+            <button
+              className="border pad-1-l-r pad-1-t-b margin-0"
+              style={{ margin: '0 4px' }}
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              First
+            </button>
+            <button
+              className="border pad-1-l-r pad-1-t-b margin-0"
+              style={{ margin: '0 4px' }}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+    
+            {getPageNumbers().map((p, i) =>
+              p === '...' ? (
+                <span
+                  key={i}
+                  className="text-neutral"
+                  style={{ margin: '0 4px', alignSelf: 'center' }}
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  className={`border pad-1-l-r pad-1-t-b margin-0 ${
+                    currentPage === p ? 'font-weight-bold' : ''
+                  }`}
+                  style={{ margin: '0 4px' }}
+                  onClick={() => setCurrentPage(p)}
+                >
+                  {p}
+                </button>
+              )
+            )}
+    
+            <button
+              className="border pad-1-l-r pad-1-t-b margin-0"
+              style={{ margin: '0 4px' }}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+            <button
+              className="border pad-1-l-r pad-1-t-b margin-0"
+              style={{ margin: '0 4px' }}
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              Last
+            </button>
+          </div>
+        )}
+      </div>
+    )}
     </div>
   );
 };
