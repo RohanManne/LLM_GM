@@ -3,18 +3,16 @@ import accountStatusData from './Triumph_Account_Status.json';
 import * as XLSX from 'xlsx';
 
 const AccountStatus = () => {
-  // ---------------- state ----------------
   const [filters, setFilters] = useState({});
   const [inputValues, setInputValues] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 8;
 
-  // visible columns (no marketLocation here)
   const [visibleColumns, setVisibleColumns] = useState({
     name: true,
     type: true,
     value: true,
-    reasonCode: true, // new column between value and description
+    reasonCode: true,
     description: true,
     source: true,
   });
@@ -26,12 +24,11 @@ const AccountStatus = () => {
   const downloadMenuRef = useRef(null);
 
   const [sourceFilterMode, setSourceFilterMode] = useState('all');
-
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownSuggestions, setDropdownSuggestions] = useState({});
   const dropdownRefs = useRef({});
 
-  // ---------------- column labels ----------------
+  // Column labels (order matters)
   const columnLabelsAll = {
     name: 'Field Name',
     type: 'Type Code',
@@ -41,37 +38,30 @@ const AccountStatus = () => {
     source: 'System Source Name',
   };
 
-  const columnLabelsTriumph = columnLabelsAll; // same set, just allows filtering by source if you want
-
-  // ---------------- data mapping ----------------
-  const pickFirst = (obj, keys) => {
-    for (const k of keys) if (obj[k] != null) return String(obj[k]);
-    return '';
+  const columnLabelsTriumph = {
+    name: 'Field Name',
+    type: 'Type Code',
+    value: 'Field Value',
+    reasonCode: 'Account Status Reason Code',
+    description: 'Field Description',
+    source: 'System Source Name',
   };
 
-  const dataRows = useMemo(() => {
-    const rows =
-      accountStatusData?.Triumph_Account_Status ||
-      accountStatusData?.AccountStatus ||
-      accountStatusData?.data ||
-      [];
+  // STRICT: same pattern as your TransactionCodes transData useMemo
+  const transData = useMemo(
+    () =>
+      (accountStatusData.Triumph_Account_Status || []).map((item) => ({
+        name: item['Field Name'] || '',
+        type: item['Type Code'] || '',
+        value: item['Field Value'] || '',
+        reasonCode: item['Account Status Reason Code'] || '',
+        description: item['Field Description'] || '',
+        source: item['System Source Name'] || '',
+      })),
+    []
+  );
 
-    return rows.map((item) => ({
-      name: pickFirst(item, ['Field Name', 'fieldName', 'Field name']),
-      type: pickFirst(item, ['Type Code', 'typeCode', 'Type code']),
-      value: pickFirst(item, ['Field Value', 'fieldValue', 'Field value']),
-      reasonCode: pickFirst(item, [
-        'Account Status Reason Code',
-        'Reason Code',
-        'accountStatusReasonCode',
-        'reasonCode',
-      ]),
-      description: pickFirst(item, ['Field Description', 'fieldDescription', 'Field description']),
-      source: pickFirst(item, ['System Source Name', 'systemSourceName', 'System source name']),
-    }));
-  }, []);
-
-  // active labels (match TransactionCodes structure)
+  // STRICT: same pattern as your TransactionCodes activeColumnLabels useMemo
   const activeColumnLabels = useMemo(() => {
     switch (sourceFilterMode) {
       case 'triumph':
@@ -81,20 +71,18 @@ const AccountStatus = () => {
     }
   }, [sourceFilterMode]);
 
-  // suggestions
   const uniqueValues = useMemo(() => {
     const cols = Object.keys(columnLabelsAll);
     const result = {};
     cols.forEach((col) => {
-      result[col] = [...new Set(dataRows.map((i) => i[col]))].filter(Boolean).sort();
+      result[col] = [...new Set(transData.map((i) => i[col]))].filter(Boolean).sort();
     });
     return result;
-  }, [dataRows]);
+  }, [transData]);
 
-  // filtering
   const filteredData = useMemo(() => {
     const src = (s) => (s || '').toLowerCase();
-    return dataRows.filter((row) => {
+    return transData.filter((row) => {
       const s = src(row.source);
       if (sourceFilterMode === 'triumph' && !s.includes('triumph')) return false;
       return Object.entries(filters).every(([key, val]) => {
@@ -102,9 +90,8 @@ const AccountStatus = () => {
         return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
       });
     });
-  }, [dataRows, filters, sourceFilterMode]);
+  }, [transData, filters, sourceFilterMode]);
 
-  // pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
@@ -112,7 +99,6 @@ const AccountStatus = () => {
 
   useEffect(() => setCurrentPage(1), [filters, sourceFilterMode]);
 
-  // debounce like TransactionCodes
   const debounce = (func, wait) => {
     let timeout;
     return (...args) => {
@@ -131,7 +117,7 @@ const AccountStatus = () => {
   const handleFilterChange = (field, value) => {
     setInputValues((prev) => ({ ...prev, [field]: value }));
     debouncedSetFilters(field, value);
-    if (value?.trim()) {
+    if (value && value.trim()) {
       const suggestions = (uniqueValues[field] || [])
         .filter((item) => item.toLowerCase().includes(value.toLowerCase()))
         .slice(0, 10);
@@ -149,12 +135,11 @@ const AccountStatus = () => {
   };
 
   const handleInputFocus = (field) => {
-    const v = inputValues[field];
-    if (v && v.trim()) {
+    if (inputValues[field] && inputValues[field].trim()) {
       const suggestions = (uniqueValues[field] || [])
-        .filter((i) => i.toLowerCase().includes(v.toLowerCase()))
+        .filter((item) => item.toLowerCase().includes(inputValues[field].toLowerCase()))
         .slice(0, 10);
-      setDropdownSuggestions((p) => ({ ...p, [field]: suggestions }));
+      setDropdownSuggestions((prev) => ({ ...prev, [field]: suggestions }));
       setActiveDropdown(field);
     }
   };
@@ -164,9 +149,9 @@ const AccountStatus = () => {
     setVisibleColumns((prev) => ({ ...prev, [column]: !prev[column] }));
   };
 
-  // downloads (same pattern)
-  const buildVisibleRows = () => {
-    return filteredData.map((row) => {
+  // Downloads — include only columns from the active set
+  const buildVisibleRows = () =>
+    filteredData.map((row) => {
       const visibleRow = {};
       Object.entries(activeColumnLabels).forEach(([key, label]) => {
         if (!visibleColumns[key]) return;
@@ -174,10 +159,11 @@ const AccountStatus = () => {
       });
       return visibleRow;
     });
-  };
 
   const downloadAsJSON = () => {
-    const blob = new Blob([JSON.stringify(buildVisibleRows(), null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(buildVisibleRows(), null, 2)], {
+      type: 'application/json',
+    });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `account_status_${new Date().toISOString().slice(0, 10)}.json`;
@@ -189,18 +175,20 @@ const AccountStatus = () => {
       .filter(([key]) => visibleColumns[key])
       .map(([, label]) => label);
 
-    const lines = filteredData.map((row) =>
-      Object.keys(activeColumnLabels)
-        .filter((k) => visibleColumns[k])
-        .map((k) => {
-          const value = (row[k] || '').toString().replace(/"/g, '""');
-          return /[",\n]/.test(value) ? `"${value}"` : value;
-        })
-        .join(',')
-    );
+    const csvContent = [
+      headers.join(','),
+      ...filteredData.map((row) =>
+        Object.keys(activeColumnLabels)
+          .filter((key) => visibleColumns[key])
+          .map((key) => {
+            const v = (row[key] || '').toString().replace(/"/g, '""');
+            return /[",\n]/.test(v) ? `"${v}"` : v;
+          })
+          .join(',')
+      ),
+    ].join('\n');
 
-    const csv = [headers.join(','), ...lines].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `account_status_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -214,7 +202,6 @@ const AccountStatus = () => {
     XLSX.writeFile(wb, `account_status_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  // click-away
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (activeDropdown && dropdownRefs.current[activeDropdown] && !dropdownRefs.current[activeDropdown].contains(event.target)) {
@@ -231,28 +218,23 @@ const AccountStatus = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [activeDropdown, showColumnToggle, showDownloadMenu]);
 
-  // page numbers
   const getPageNumbers = () => {
     const pages = [];
-    const maxPagesToShow = 5;
-
-    if (totalPages <= maxPagesToShow) {
+    const maxPages = 5;
+    if (totalPages <= maxPages) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else if (currentPage <= 3) {
+      pages.push(1, 2, 3, '...', totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
     } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, '...', totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
-      }
+      pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
     }
     return pages;
   };
 
   const activeKeys = Object.keys(activeColumnLabels);
 
-  // ---------------- render (strictly mirrors TransactionCodes) ----------------
   return (
     <div className="acct-status-code-container pad-2 border">
       {/* Header */}
@@ -352,7 +334,6 @@ const AccountStatus = () => {
               ))}
           </tr>
         </thead>
-
         <tbody>
           {/* Filter Row */}
           <tr className="filter-row">
@@ -386,7 +367,7 @@ const AccountStatus = () => {
 
           {/* Data Rows */}
           {currentData.map((row, idx) => (
-            <tr key={`acct-status-${startIndex + idx}`}>
+            <tr key={`acct-row-${idx}`}>
               {activeKeys.filter((k) => visibleColumns[k]).map((key) => (
                 <td key={`${idx}-${key}`} className="pad-1-l-r pad-1-t-b border">
                   {row[key] || ''}
@@ -397,12 +378,12 @@ const AccountStatus = () => {
         </tbody>
       </table>
 
-      {/* Empty */}
       {!filteredData.length && (
-        <div className="margin-1-t text-neutral font-italic">No Account Status Codes To Be Displayed</div>
+        <div className="margin-1-t text-neutral font-italic">
+          No Account Status Codes To Be Displayed
+        </div>
       )}
 
-      {/* Pagination (same &nbsp; separators) */}
       {filteredData.length > 0 && (
         <div className="flex flex-justify-between flex-align-center margin-2-t stack-1-r">
           <div>
