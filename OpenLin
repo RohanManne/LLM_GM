@@ -169,3 +169,77 @@ What’s different, then?
 5) What the DB stores (both PostgreSQL, but schema differs)
 	•	Marquez Postgres: lineage-centric (jobs/runs/datasets + JSONB facets).
 	•	ODD Postgres: catalog-centric (entities, sources, ownership, tags, dashboards) plus lineage relationships.
+
+Airflow: runs DAGs and (with openlineage-airflow) emits lineage events for tasks.
+	•	PySpark: reads/writes the lake and (with the Spark agent/listener) emits lineage events for inputs/outputs.
+	•	Data Lake: just holds your files/tables—no calls to OpenLineage.
+	•	Marquez (OpenLineage API): receives events, normalizes them, persists to Postgres.
+	•	Postgres: stores metadata only (jobs, runs, datasets, lineage edges, facets).
+	•	Marquez UI: queries the Marquez API to render lineage graphs & details.
+
+🧩 What Each Piece Does — Open Data Discovery (ODD)
+	•	Airflow:
+Runs your DAGs and orchestrates jobs (including PySpark tasks).
+You can use the ODD Airflow Collector (or a custom metadata script) to extract job metadata — DAG IDs, task names, owners, schedules — and send it to the ODD Backend API.
+(Unlike OpenLineage, it doesn’t emit “events”; it sends static metadata snapshots.)
+
+⸻
+
+	•	PySpark:
+Executes transformations — reads/writes data from the Data Lake (e.g., S3, ADLS, or GCS).
+ODD doesn’t instrument PySpark directly; instead, metadata about PySpark jobs or their output datasets can be collected by:
+	•	The ODD Spark Collector (if you have Spark’s metastore/catalog available), or
+	•	A custom script that registers those datasets and transformations in ODD.
+The goal is to describe what data assets exist and how they relate, not track live runs.
+
+⸻
+
+	•	Data Lake (S3/GCS/ADLS/Delta/Iceberg):
+Stores your actual data files and tables.
+It never calls ODD — instead, ODD Collectors connect to it (via APIs or metadata catalogs like Hive/Glue) to pull metadata such as:
+	•	Dataset names and paths
+	•	Columns and schemas
+	•	Owners, tags, creation timestamps
+	•	Upstream/downstream lineage relationships
+
+⸻
+
+	•	ODD Collectors:
+These are small services or scripts that connect to your data sources (Airflow, Spark, dbt, Snowflake, Tableau, etc.), extract metadata, and send JSON payloads to the ODD Backend API.
+Example collectors:
+	•	Airflow Collector
+	•	dbt Collector
+	•	BigQuery / Snowflake Collectors
+	•	Custom Python collector for your Spark or S3 jobs
+
+⸻
+
+	•	ODD Backend (API Server):
+The core engine of ODD.
+	•	Receives metadata from collectors via REST API.
+	•	Normalizes entities (datasets, jobs, dashboards).
+	•	Stores lineage and relationships.
+	•	Writes everything to the PostgreSQL metadata DB.
+	•	Exposes endpoints for the UI to query.
+
+⸻
+
+	•	PostgreSQL (Metadata Database):
+Stores only metadata, not data.
+Examples of stored entities:
+	•	Datasets (names, columns, schema, owners)
+	•	Data sources (S3 buckets, databases, etc.)
+	•	Jobs (Airflow DAGs, Spark pipelines)
+	•	Lineage links (input → output)
+	•	Tags, descriptions, ownership, dashboards
+It serves as the single source of truth for all metadata the ODD platform manages.
+
+⸻
+
+	•	ODD UI:
+The frontend web application that connects to the ODD Backend API (not directly to Postgres).
+It lets you:
+	•	Search and browse all datasets, jobs, and dashboards
+	•	Visualize data lineage across Airflow, PySpark, and your data lake
+	•	See ownership, tags, and documentation
+	•	Filter by source systems or domains
