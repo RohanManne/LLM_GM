@@ -133,3 +133,39 @@ Producers ─HTTP──▶ Collector
 - Backfill: run crawler first, then let pipelines add run history.
 - Idempotency: stable Job/Dataset IDs → clean merges.
 - Security: scrub PII, restrict Marquez API/UI.
+
+What’s different, then?
+
+1) API layer & data model focus
+	•	Marquez (OpenLineage)
+	•	API focus: OpenLineage events & lineage graph.
+	•	Model: Jobs, Runs, Datasets, DatasetVersions, Lineage edges, Facets (JSONB).
+	•	Typical flow: Producers emit OL events → Marquez API persists → Marquez UI queries API to render lineage.
+	•	Open Data Discovery (ODD)
+	•	API focus: Broader catalog (datasets, jobs, dashboards/BI, owners, tags), plus lineage.
+	•	Model: Rich catalog entities (data_entity, data_source, ownership, tags, lineage tables, custom metadata).
+	•	Typical flow: Collectors push catalog metadata → ODD Backend API persists → ODD UI queries API for catalog + lineage.
+
+2) Service topology
+	•	Marquez
+	•	Usually 2 services: API (backend) and Web/UI.
+	•	UI calls the Marquez API (same deployment).
+	•	ODD
+	•	Usually 3 services: ODD Backend, ODD UI, Postgres.
+	•	UI calls the ODD Backend; collectors also call the backend.
+
+3) Endpoints & contracts
+	•	Marquez UI → Marquez API
+	•	Endpoints expose OpenLineage-first resources (namespaces, jobs, runs, datasets, events).
+	•	ODD UI → ODD Backend
+	•	Endpoints expose catalog resources (entities, ownership, tags, BI objects) and lineage views.
+
+4) Metadata ingestion path
+	•	Marquez
+	•	Ingestion = OpenLineage events (push at runtime from Spark/Airflow/dbt, etc.).
+	•	ODD
+	•	Ingestion = Collectors (poll/pull from systems) or custom pushes to ODD’s ingestion API.
+
+5) What the DB stores (both PostgreSQL, but schema differs)
+	•	Marquez Postgres: lineage-centric (jobs/runs/datasets + JSONB facets).
+	•	ODD Postgres: catalog-centric (entities, sources, ownership, tags, dashboards) plus lineage relationships.
