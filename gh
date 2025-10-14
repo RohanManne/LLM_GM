@@ -1,0 +1,52 @@
+                     ┌───────────────────────────────────────────┐
+                     │           External Data Sources           │
+                     │     (APIs • DB dumps • logs • files)      │
+                     └──────────────────────────┬────────────────┘
+                                               │  ingest (batch/stream)
+                                               ▼
+                          ┌───────────────────────────────────────────┐
+                          │   Google Cloud Storage (Data Lake)        │
+                          │   gs://prj-d-gbl-mars-raw/landing/...     │
+                          │   ─ role: bronze / raw files               │
+                          └───────────────┬───────────────────────────┘
+                                          │ read
+                                          │
+             ┌────────────────────────────┴─────────────────────────────┐
+             │                    Orchestration / Engines               │
+             │  Airflow (providers: google, openlineage)                │
+             │  dbt (openlineage-dbt) • Spark/Dataflow (openlineage)    │
+             └───────────────┬───────────────────────────────┬─────────┘
+                             │ writes/load                   │ emits lineage
+                             ▼                               │ (HTTP)
+         ┌──────────────────────────────────────┐            │
+         │        BigQuery (Warehouse)          │            │
+         │  project: prj-d-gbl-mars-datalake    │            │
+         │  datasets (layers):                   │            │
+         │    - landing  → staging/silver        │            │
+         │    - data     → refined/silver        │            │
+         │    - bi       → curated/gold          │            │
+         │  examples:                             │            │
+         │    landing.raw_orders  ──▶             │            │
+         │    data.orders_clean   ──▶             │            │
+         │    bi.sales_dashboard                    │            │
+         └───────────────────────────┬──────────────┘            │
+                                     │                           │
+                                     │ emits lineage (inputs/outputs, job, run)
+                                     ▼                           │
+                    ┌────────────────────────────────────────────┴──────────────┐
+                    │               OpenLineage / Marquez API                   │
+                    │  receives JSON events: { job, run, inputs, outputs, ... }│
+                    └───────────────────────────┬───────────────────────────────┘
+                                                │ persists
+                                                ▼
+                                 ┌──────────────────────────────────┐
+                                 │ PostgreSQL (Metadata Store)      │
+                                 │ jobs • runs • datasets • facets  │
+                                 └───────────────────┬──────────────┘
+                                                     │ serves
+                                                     ▼
+                         ┌─────────────────────────────────────────────────┐
+                         │                 Marquez UI                      │
+                         │  lineage graph: gs://… → landing → data → bi   │
+                         │  job & run history, schema facets, owners      │
+                         └─────────────────────────────────────────────────┘
