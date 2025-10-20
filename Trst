@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import transactionData from './Triumph_Trans_Codes.json';
+import { transacationStatusCode } from './referenceDataAPIDetails';
 import * as XLSX from 'xlsx';
 
 const TransactionCodes = () => {
@@ -50,51 +50,89 @@ const TransactionCodes = () => {
     source: 'System Source Name',
   };
 
-  const transData = useMemo(
-    () =>
-      transactionData.Triumph_Trans_Codes.map((item) => ({
-        name: item['Field Name'] || '',
-        blockCode1: item['Block Code 1'] || '',
-        blockCode2: item['Block Code 2'] || '',
-        marketLocation: item['Market Location'] || '',
-        batchCode: item['Batch Code'] || '',
-        subCode: item['Sub Code'] || '',
-        value: item['Field Value'] || '',
-        description: item['Field Description'] || '',
-        source: item['System Source Name'] || '',
-      })),
-    []
-  );
+  const columnLabelsCARS = {
+    name: 'Field Name',
+    marketLocation: 'Market Location',
+    batchCode: 'Batch Code',
+    subCode: 'Sub Code',
+    value: 'Field Value',
+    description: 'Field Description',
+    source: 'System Source Name',
+  };
 
-  const activeColumnLabels = useMemo(() => {
-    switch (sourceFilterMode) {
-      case 'triumph':
-        return columnLabelsTriumph;
-      default:
-        return columnLabelsAll;
-    }
-  }, [sourceFilterMode]);
+  const [apiRows, setApiRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await transacationStatusCode();
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.transactionCodes) ? data.transactionCodes : []);
+        const mapped = (list || []).map((item) => {
+          const safe = item || {};
+          return {
+            name: safe.sourceSystem || '',
+            blockCode1: safe.countryCode || '',
+            blockCode2: safe.batchCode || '',
+            marketLocation: safe.accountType || '',
+            batchCode: '',
+            subCode: '',
+            value: safe.transactionReason || '',
+            description: safe.description || '',
+            source: safe.systemSource || '',
+          };
+        });
+        if (mounted) setApiRows(mapped);
+      } catch (e) {
+        if (mounted) setError(e?.message || 'Failed to load data');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const uniqueValues = useMemo(() => {
     const cols = Object.keys(columnLabelsAll);
     const result = {};
     cols.forEach((col) => {
-      result[col] = [...new Set(transData.map((i) => i[col]))].filter(Boolean).sort();
+      result[col] = [...new Set(apiRows.map((i) => i[col]))].filter(Boolean).sort();
     });
     return result;
-  }, [transData]);
+  }, [apiRows]);
 
   const filteredData = useMemo(() => {
     const src = (s) => (s || '').toLowerCase();
-    return transData.filter((row) => {
+    return apiRows.filter((row) => {
       const s = src(row.source);
+
+      if (sourceFilterMode === 'globestar' && s.includes('globestar')) return false;
       if (sourceFilterMode === 'triumph' && !s.includes('triumph')) return false;
+      if (sourceFilterMode === 'cars' && !s.includes('cars')) return false;
+
       return Object.entries(filters).every(([key, val]) => {
         if (!val || !val.trim()) return true;
         return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
       });
     });
-  }, [transData, filters, sourceFilterMode]);
+  }, [apiRows, filters, sourceFilterMode]);
+
+  const activeColumnLabels = useMemo(() => {
+    switch (sourceFilterMode) {
+      case 'globestar':
+        return columnLabelsAll;
+      case 'triumph':
+        return columnLabelsTriumph;
+      case 'cars':
+        return columnLabelsCARS;
+      default:
+        return columnLabelsAll;
+    }
+  }, [sourceFilterMode]);
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -238,7 +276,9 @@ const TransactionCodes = () => {
         <div>
           <h2 className="margin-0 font-weight-bold">Transaction Codes</h2>
           <p className="text-neutral font-italic margin-0">
-            Enterprise Catalog Business Term Definition: DEFINITION
+            <strong>Enterprise Catalog Business Term Definition:</strong> An
+            identifier for each transaction by the Submission team.
+            This is applicable only to Base, Incremental and Accrual.
           </p>
         </div>
 
@@ -268,20 +308,19 @@ const TransactionCodes = () => {
 
             {showDownloadMenu && (
               <div
-                className="position-absolute-tr margin-1-t border border-dark pad-1"
-                style={{ zIndex: 999, backgroundColor: 'white' }}
+                className="position-absolute-tr margin-1-t border border-dark pad-1 dls-white-bg" style={{ zIndex: 3 }}
               >
                 <div className="font-weight-bold pad-1 border-bottom margin-0">
                   Export Format
                 </div>
                 <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsExcel}>
-                  <span className="margin-1-r">📗</span> Download as Excel
+                  <span className="margin-1-r"></span>Download as Excel
                 </button>
                 <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsCSV}>
-                  <span className="margin-1-r">📊</span> Download as CSV
+                  <span className="margin-1-r"></span>Download as CSV
                 </button>
                 <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsJSON}>
-                  <span className="margin-1-r">📄</span> Download as JSON
+                  <span className="margin-1-r"></span>Download as JSON
                 </button>
               </div>
             )}
@@ -294,14 +333,13 @@ const TransactionCodes = () => {
               aria-expanded={showColumnToggle}
               onClick={() => setShowColumnToggle(!showColumnToggle)}
             >
-              <span>⚙️</span>
-              <span className="margin-1-l">Columns</span>
+              <span></span>
+              <span className>Columns</span>
             </button>
 
             {showColumnToggle && (
               <div
-                className="position-absolute-tr margin-1-t border border-dark pad-1"
-                style={{ zIndex: 999, backgroundColor: 'white' }}
+                className="position-absolute-tr margin-1-t border border-dark pad-1 dls-white-bg" style={{ zIndex: 3 }}
               >
                 <div className="font-weight-bold pad-1 border-bottom margin-0">
                   Show/Hide Columns
@@ -361,8 +399,7 @@ const TransactionCodes = () => {
                   />
                   {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
                     <div
-                      className="border width-full margin-1-t position-absolute"
-                      style={{ backgroundColor: 'white', zIndex: 999 }}
+                      className="border width-full margin-1-t position-absolute dls-white-bg"
                     >
                       {(dropdownSuggestions[key] || []).map((s, i) => (
                         <div key={i} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
@@ -389,9 +426,15 @@ const TransactionCodes = () => {
         </tbody>
       </table>
 
-      {!filteredData.length && (
+      {loading && (
         <div className="margin-1-t text-neutral font-italic">
-          No Transaction Codes To Be Displayed
+          Loading transaction codes...
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="margin-1-t text-neutral font-italic">
+          Failed to load: {error}
         </div>
       )}
 
