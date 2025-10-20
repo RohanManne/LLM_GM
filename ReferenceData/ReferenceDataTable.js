@@ -3,7 +3,7 @@ import { useRefTableState } from './useRefTableState';
 import { exportAsJSON, exportAsCSV, exportAsXLSX } from './exportUtils';
 
 /**
- * Shared table UI for Reference Data
+ * Shared table UI for Reference Data (DLS classes preserved)
  * Props:
  *  - title, definition
  *  - data: canonical rows[]
@@ -11,7 +11,7 @@ import { exportAsJSON, exportAsCSV, exportAsXLSX } from './exportUtils';
  *  - labelsPack: { all, bySource, defaultVisible, locked, sourceModes }
  *  - baseFileName: string for downloads
  */
-const ReferenceDataTable = ({ title, definition, data, loadState, labelsPack, baseFileName = 'data' }) => {
+function ReferenceDataTable({ title, definition, data, loadState, labelsPack, baseFileName = 'data' }) {
   const {
     // state & helpers
     sourceFilterMode, setSourceFilterMode,
@@ -26,7 +26,6 @@ const ReferenceDataTable = ({ title, definition, data, loadState, labelsPack, ba
   } = useRefTableState({ rows: data, labelsPack, rowsPerPage: 8 });
 
   const { loading, error } = loadState || {};
-
   const sourceModes = labelsPack?.sourceModes || [];
 
   return (
@@ -182,7 +181,7 @@ const ReferenceDataTable = ({ title, definition, data, loadState, labelsPack, ba
         </div>
       )}
       {error && !loading && (
-        <div className="margin-1-t text-danger">
+        <div className="margin-1-t text-neutral font-italic">
           Failed to load: {error}
         </div>
       )}
@@ -215,6 +214,6 @@ const ReferenceDataTable = ({ title, definition, data, loadState, labelsPack, ba
       )}
     </div>
   );
-};
+}
 
 export default ReferenceDataTable;
