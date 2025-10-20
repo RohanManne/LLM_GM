@@ -11,7 +11,6 @@ export const LABELS = {
       source: 'System Source Name',
     },
     bySource: {
-      // Override per source if you need special views (e.g., fewer cols for Triumph)
       triumph: {
         name: 'Field Name',
         type: 'Type Code',
@@ -57,14 +56,14 @@ export const LABELS = {
         value: 'Field Value',
         description: 'Field Description',
         source: 'System Source Name',
-      },
-      // globestar: null → falls back to "all"
+      }
+      // globestar: falls back to "all"
     },
     defaultVisible: {
       name: true, blockCode1: true, blockCode2: true, marketLocation: true,
       batchCode: true, subCode: true, value: true, description: true, source: true
     },
-    locked: ['marketLocation'], // can't be hidden
+    locked: ['marketLocation'], // cannot be hidden
     sourceModes: [
       { value: 'all', label: 'All Sources' },
       { value: 'globestar', label: 'Globestar Only' },
