@@ -49,7 +49,7 @@ export function useRefTableState({ rows, labelsPack, rowsPerPage = 8 }) {
     return res;
   }, [rows, activeKeys]);
 
-  // Filtering including source mode
+  // Filtering including source mode (include mode)
   const filteredData = useMemo(() => {
     const needleIn = (needle, hay) =>
       (hay || '').toLowerCase().includes((needle || '').toLowerCase());
@@ -57,7 +57,6 @@ export function useRefTableState({ rows, labelsPack, rowsPerPage = 8 }) {
     return (rows || []).filter((row) => {
       const src = (row?.source || '').toLowerCase();
       if (sourceFilterMode !== 'all') {
-        // include-mode: require match
         if (!src.includes(sourceFilterMode)) return false;
       }
       // column text filters
