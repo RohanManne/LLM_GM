@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import accountStatusData from './Triumph_Account_Status.json';
+import { accountStatusAPIDetails } from './referenceDataAPIDetails';
 import * as XLSX from 'xlsx';
 
 const AccountStatus = () => {
+  const [rawStatusObj, setRawStatusObj] = useState(null);
+  const [loadState, setLoadState] = useState({loading: false, error: ''});
   const [filters, setFilters] = useState({});
   const [inputValues, setInputValues] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,19 +49,58 @@ const AccountStatus = () => {
     source: 'System Source Name',
   };
 
-  // STRICT: same pattern as your TransactionCodes transData useMemo
-  const transData = useMemo(
-    () =>
-      (accountStatusData.Triumph_Account_Status || []).map((item) => ({
-        name: item['Field Name'] || '',
-        type: item['Type Code'] || '',
-        value: item['Field Value'] || '',
-        reasonCode: item['Account Status Reason Code'] || '',
-        description: item['Field Description'] || '',
-        source: item['System Source Name'] || '',
-      })),
-    []
-  );
+ useEffect(() => {
+  let mounted = true;
+  (async () => {
+    setLoadState({ loading: true, error: '' });
+    try {
+      const obj = await accountStatusAPIDetails({force: false});
+      if (!mounted) return;
+      setRawStatusObj(obj || {});
+      setLoadState({ loading: false, error: '' });
+    } catch (e) {
+      if (!mounted) {
+        setLoadState({ loading: false, error: error.message || 'Failed to load' });
+      }
+    }
+  })();
+  return () => { mounted = false; };
+}, []);
+
+const acctStatusCodeData = useMemo(() => {
+  if (!rawStatusObj || typeof rawStatusObj !== 'object') return [];
+  
+  const rows = [];
+  (rawStatusObj['ACTIVE'] || []).forEach(v => {
+    rows.push({
+      name: 'ACTIVE',
+      type: '',
+      value: (v ?? '').toString(),
+      reasonCode: '',
+      description: '',
+      source: ''
+    });
+  });
+  
+  const mergedCANCELLEDValues = [
+    ...(rawStatusObj['CANCELLED'] || []),
+    ...(rawStatusObj['CHARGE_OFF'] || []),
+    ...(rawStatusObj['COLLECTIONS'] || []),
+  ];
+
+  mergedCANCELLEDValues.forEach(v => {
+    rows.push({
+      name: 'CANCELLED',
+      type: '',
+      value: (v ?? '').toString(),
+      reasonCode: '',
+      description: '',
+      source: ''
+    });
+  });
+
+  return rows;
+}, [rawStatusObj]);
 
   // STRICT: same pattern as your TransactionCodes activeColumnLabels useMemo
   const activeColumnLabels = useMemo(() => {
@@ -75,14 +116,14 @@ const AccountStatus = () => {
     const cols = Object.keys(columnLabelsAll);
     const result = {};
     cols.forEach((col) => {
-      result[col] = [...new Set(transData.map((i) => i[col]))].filter(Boolean).sort();
+      result[col] = [...new Set(acctStatusCodeData.map((i) => i[col]))].filter(Boolean).sort();
     });
     return result;
-  }, [transData]);
+  }, [acctStatusCodeData]);
 
   const filteredData = useMemo(() => {
     const src = (s) => (s || '').toLowerCase();
-    return transData.filter((row) => {
+    return acctStatusCodeData.filter((row) => {
       const s = src(row.source);
       if (sourceFilterMode === 'triumph' && !s.includes('triumph')) return false;
       return Object.entries(filters).every(([key, val]) => {
@@ -90,7 +131,7 @@ const AccountStatus = () => {
         return (row[key] || '').toLowerCase().includes(val.trim().toLowerCase());
       });
     });
-  }, [transData, filters, sourceFilterMode]);
+  }, [acctStatusCodeData, filters, sourceFilterMode]);
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -242,7 +283,10 @@ const AccountStatus = () => {
         <div>
           <h2 className="margin-0 font-weight-bold">Account Status Codes</h2>
           <p className="text-neutral font-italic margin-0">
-            Enterprise Catalog Business Term Definition: DEFINITION
+            <strong>Enterprise Catalog Business Term Definition:</strong> A 
+            numeric or alphanumeric representation of the current standing of an account, 
+            such as active, cancelled or purged. These codes may vary across systems,
+            for example, "A" for Active.
           </p>
         </div>
 
@@ -270,18 +314,17 @@ const AccountStatus = () => {
 
             {showDownloadMenu && (
               <div
-                className="position-absolute-tr margin-1-t border border-dark pad-1"
-                style={{ zIndex: 999, backgroundColor: 'white' }}
+                className="position-absolute-tr margin-1-t border border-dark pad-1 dls-white-bg" style={{ zIndex: 999 }}
               >
                 <div className="font-weight-bold pad-1 border-bottom margin-0">Export Format</div>
                 <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsExcel}>
-                  <span className="margin-1-r">📗</span> Download as Excel
+                  <span className="margin-1-r"></span>Download as Excel
                 </button>
                 <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsCSV}>
-                  <span className="margin-1-r">📊</span> Download as CSV
+                  <span className="margin-1-r"></span>Download as CSV
                 </button>
                 <button className="display-block pad-1 text-align-left border-0" onClick={downloadAsJSON}>
-                  <span className="margin-1-r">📄</span> Download as JSON
+                  <span className="margin-1-r"></span>Download as JSON
                 </button>
               </div>
             )}
@@ -294,14 +337,13 @@ const AccountStatus = () => {
               aria-expanded={showColumnToggle}
               onClick={() => setShowColumnToggle(!showColumnToggle)}
             >
-              <span>⚙️</span>
-              <span className="margin-1-l">Columns</span>
+              <span></span>
+              <span className="">Columns</span>
             </button>
 
             {showColumnToggle && (
               <div
-                className="position-absolute-tr margin-1-t border border-dark pad-1"
-                style={{ zIndex: 999, backgroundColor: 'white' }}
+                className="position-absolute-tr margin-1-t border border-dark pad-1 dls-white-bg" style={{ zIndex: 999 }}
               >
                 <div className="font-weight-bold pad-1 border-bottom margin-0">Show/Hide Columns</div>
                 {Object.entries(activeColumnLabels).map(([key, label]) => (
@@ -350,8 +392,7 @@ const AccountStatus = () => {
                   />
                   {activeDropdown === key && (dropdownSuggestions[key] || []).length > 0 && (
                     <div
-                      className="border width-full margin-1-t position-absolute"
-                      style={{ backgroundColor: 'white', zIndex: 999 }}
+                      className="border width-full margin-1-t position-absolute dls-white-bg" style={{ zIndex: 999 }}
                     >
                       {(dropdownSuggestions[key] || []).map((s, i) => (
                         <div key={i} className="pad-1" onClick={() => handleSuggestionClick(key, s)}>
@@ -378,9 +419,15 @@ const AccountStatus = () => {
         </tbody>
       </table>
 
-      {!filteredData.length && (
+      {loadState.loading && (
         <div className="margin-1-t text-neutral font-italic">
-          No Account Status Codes To Be Displayed
+          Loading status codes...
+        </div>
+      )}
+
+      {loadState.error && (
+        <div className="margin-1-t text-neutral font-italic">
+          Failed to load: {loadState.error}
         </div>
       )}
 
