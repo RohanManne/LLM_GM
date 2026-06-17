@@ -1,0 +1,1743 @@
+(00:00) We can start the call.
+
+(00:04) If Alpana is not going to join, definitely.
+
+(00:07) I'm sure if Parul is going to join.
+
+(00:09) She is.
+
+(00:13) Okay.
+
+(00:13) No problem.
+
+(00:14) We can get started.
+
+(00:16) So the first thing I want to make sure about is circulating, going back and forth about the requirements, right?
+
+(00:25) And I know Alpana followed up.
+
+(00:27) separately to Pradeep and I on the requirements.
+
+(00:32) I'm not really sure what exactly is the ask about requirements, but the requirements have been shared for data zone pilot before it began, right?
+
+(00:41) So it's the same requirements.
+
+(00:45) And for more clarity, we created another requirement document in detail.
+
+(00:50) And Alex has shared with everyone already.
+
+(00:53) And I can reshare if you really want to look at it.
+
+(00:56) I want to make sure if that is what you guys are looking for.
+
+(00:59) And we can, you know, close that task that you guys have all requirements you need in order to continue the pilot.
+
+(01:10) That's the first thing.
+
+(01:12) Yeah.
+
+(01:13) Can we bring up that Sheet Somal because Rakesh and Mukul are there.
+
+(01:17) You know, we can discuss and we can close the task as you mentioned.
+
+(01:21) If they have any questions or doubts also, they can look into it and
+
+(01:26) Sure.
+
+(01:30) I'm noting it down.
+
+(01:31) I'll send the Confluence page which Mukul has already.
+
+(01:35) We have been documenting everything on that Confluence page about the scope, timeline, dependencies, risk, everything.
+
+(01:43) That page needs to be updated.
+
+(01:45) That's it.
+
+(01:46) Not from requirement standpoint, but the timeline perspective, what tasks are pending, from where we are starting, what
+
+(01:54) what is needed, if there are any additional tasks, who is the owner, what are the dependencies and risk at wall and the timeline.
+
+(02:01) Timeline needs to be updated.
+
+(02:03) That's the ask for the moment, I mean, immediate ask from William.
+
+(02:10) He really, he wants to make sure that the data zone is the first priority while we are in parallel.
+
+(02:16) It's fine if we are working on GCP pilot, but
+
+(02:19) We don't want to slow down AWS progress because of the GCP.
+
+(02:23) That should be very clear.
+
+(02:24) I just want to make sure.
+
+(02:26) I know Alpana is not on the call and Parul, but I'll create the notes after this meeting.
+
+(02:32) Yeah.
+
+(02:32) So, yeah.
+
+(02:33) The same requirement means whatever you are saying that initially it is shared, the same thing holds good.
+
+(02:39) There is no further change into that, the requirement perspective.
+
+(02:42) Right.
+
+(02:43) So, I mean, think about this way, right?
+
+(02:47) So,
+
+(02:48) the pilot requirements are same regardless of the we do the pilot with AWS data zone or GCP.
+
+(02:55) That is not going to change.
+
+(02:56) We want to harvest the technical metadata from the same sources.
+
+(03:00) We need connectors for those and we need demo for Google Dataplex.
+
+(03:04) And I think Lakshmi is already working on it, so that's fine.
+
+(03:09) That is how I'm looking at it.
+
+(03:10) So requirements are there and we have detailed requirements document created by Alex, which I'll share.
+
+(03:16) He has already shared before, but I'll reshare.
+
+(03:18) That's fine.
+
+(03:19) Thank you, Samuel.
+
+(03:21) One thing I did want to quickly jump in before we kick off is, you know, as Samuel said, William, you know, was asking for a very specific concrete AWS data zone status by the end of
+
+(03:39) the day today.
+
+(03:40) So Sawmill, Pradeep, Rohan and Rajiv, I'll meet with you guys after the call so we can discuss and then I can give William the update for us.
+
+(03:52) He wants to know, he wants to see progress, not just meeting touchpoints.
+
+(03:57) He wants specific owners of who's doing what.
+
+(04:00) He wants specific dates, next dates, owners of the dates, blockers, dependencies.
+
+(04:07) and what is realistic that we can produce by June 30th, and also what is going to get done in Q3.
+
+(04:15) And I would like to, I mean, we can use this call or we can use the catch-up call to just get anchor on that because I need to provide an update to William at the end of today where we are with AWS data zones.
+
+(04:29) Like, you know, he's basically sick and tired.
+
+(04:32) I mean, enough is, because all the people are telling him is that we have all these meetings.
+
+(04:36) But, you know, he wants to actually see progress, not just saying we're meeting, right?
+
+(04:42) No, Alex, fair enough.
+
+(04:43) I think we are making progress for sure.
+
+(04:47) Do we need the progress documented and it needs to be in a write-up that I can send to William today?
+
+(04:54) I need, I don't, and I'm not going to send William to a confluence page.
+
+(04:58) I need...
+
+(04:59) I need the write-up in a format that I can send to William in an email, and I'll copy Andrew.
+
+(05:05) I need it in a format that I can send it in an email.
+
+(05:10) I'm not going to send my boss's boss a Confluence page link.
+
+(05:14) I need a written, documented format that I can send to an executive on a status update by the end of today.
+
+(05:22) That's what I was asked from William.
+
+(05:26) Okay.
+
+(05:26) No, that's fair enough, Alex.
+
+(05:28) I mean, I'm aligned on that.
+
+(05:31) And I confirmed William that we will provide the exact status and the timeline.
+
+(05:37) So not sure about that.
+
+(05:39) At the end of today, I need a status of where we are.
+
+(05:43) What are the different blockers?
+
+(05:45) What are the dependencies?
+
+(05:46) And what are the key dates?
+
+(05:48) It's okay if we don't have the entire, I'm not asking for the entire project plan.
+
+(05:52) That's not what I'm asking.
+
+(05:54) I'm asking for a status update of where we are today.
+
+(05:59) What are the next dates?
+
+(06:00) And are there any blockers?
+
+(06:02) As far as I know, there shouldn't be any blockers for AWS data zone because that's a priority and it was already approved.
+
+(06:08) We're already working on GCP, but I'm not asking about GCP.
+
+(06:12) I'm just asking about AWS.
+
+(06:14) Where are we with AWS today?
+
+(06:16) And where are we going to be end of June and in Q3?
+
+(06:20) It's like three questions.
+
+(06:22) And I just need to know who's owning the dates and what are the dates and what are dependencies?
+
+(06:27) Like who owns what if, if something gets delayed, that's all I need by the end of today.
+
+(06:33) I don't need the project plan.
+
+(06:35) I just need an update.
+
+(06:38) I should be able to get an update by today.
+
+(06:40) I don't see why I can't get an update today or where we are like a written update of where we are today.
+
+(06:46) Not that we had a meeting, like an actual update of dates.
+
+(06:50) Okay.
+
+(06:51) I would like to use this meeting in this case to discuss all the dependencies so we can document it and the risk or the high level timeline.
+
+(07:04) The Confluence page is not updated, and I'm really not sure, Alex, in absence of Alpna, if anyone is going to update that page.
+
+(07:13) I don't care about the Confluence page right now.
+
+(07:15) I just need to give William an update.
+
+(07:17) If you guys want to have a Confluence page to manage the project, that's fine.
+
+(07:21) You can use a Confluence page, a SharePoint.
+
+(07:24) I mean, it doesn't really matter the format, right?
+
+(07:26) As long as you have a way that you can organize every owner and everybody is on the same page and everyone has access to the same page,
+
+(07:34) So people are aware, everybody, all the stakeholders need to be aware of the progress, right?
+
+(07:39) And Pradeep's on.
+
+(07:41) Pradeep, I can tell you that William clearly is getting, I mean, he basically has no progress visibility for two or three weeks.
+
+(07:48) Like he hasn't heard anything in two or three weeks, which I don't think is acceptable.
+
+(07:52) Like he's getting daily status updates, descending to miles for the Mars migration.
+
+(07:57) I think asking for an update every two weeks is not a big ask for this project.
+
+(08:02) I really don't think a bi-weekly update is...
+
+(08:06) I got it.
+
+(08:06) I think we should use this meeting rather than spending time on the ask.
+
+(08:12) Everyone is clear on the ask.
+
+(08:13) I think we should start talking about the dependencies today we have on page and the approach we are taking and what risk we are talking about.
+
+(08:22) I think if we talk about and utilize this meeting, that will be much better.
+
+(08:25) Otherwise, after this meeting, Alex, we will not have anyone to talk because these all resources are in India.
+
+(08:32) And I don't think we'll be able to share any update with William by end of day today.
+
+(08:36) So I would rather spend time to discuss more about the current dependency.
+
+(08:42) I totally agree with what you're saying, Salman.
+
+(08:46) Why don't we just, as you've mentioned, right, why don't we just go through the list of tasks which we have currently, what is done and what are the next steps and where we are blocked.
+
+(08:58) This seat is basically these all things are the task but I think most of the things were done on this on the engineering account or the CRMT account right Mukul you can correct me.
+
+(09:11) But the last one what the latest update that we aligned last time was that we have to use the Mars account to do all the provisioning aspects of the data zone right.
+
+(09:21) So on the new account, basically two things, major things has been done.
+
+(09:26) The data zone role, which was required to get it created so that we can provision it.
+
+(09:31) That got created today.
+
+(09:33) And there was an issue in provisioning of glue, basically.
+
+(09:38) So that also got resolved.
+
+(09:40) We are able to...
+
+(09:41) So Rakesh, can you go one by one?
+
+(09:43) So the first thing, you said Mars account, right?
+
+(09:46) So we have that account created already, correct?
+
+(09:50) Yes, we have that account created.
+
+(09:52) Okay, good.
+
+(09:52) And all accesses are provisioned on that account.
+
+(09:56) Which accesses are pending today and if we have any blockers?
+
+(10:02) I don't think with respect to account roles or access any blockers we have.
+
+(10:07) GAR MDM, GAR data zone account which was created earlier on the engineering account that has been created today on GAR.
+
+(10:15) Mars account also.
+
+(10:16) So that role part we are good.
+
+(10:18) We can basically start provisioning it.
+
+(10:21) Today it got created, so we'll start provisioning the stuff.
+
+(10:24) Before that, before even we go for provisioning stuff and write, we had to basically create the glue, data source and all those things which also got created.
+
+(10:36) Mukul, you are there, right?
+
+(10:37) Yes, yes.
+
+(10:38) So glue part we have created today only.
+
+(10:42) We are proceeding with the ACLs to open the connectivity from on-prem, March.
+
+(10:48) So line number 6 if you see, right?
+
+(10:50) So line number 6, right?
+
+(10:53) So this will be new, right?
+
+(10:55) Yeah, one second, Rakesh.
+
+(10:57) So what we will do, we will revisit the status and actual dates for this, but the task remains the same for the new March cluster.
+
+(11:07) So Samil, here is an update, right?
+
+(11:09) So initially we did everything with the guard cluster, but now we have to repeat this task for Mars.
+
+(11:16) So now we have completed...
+
+(11:17) Earlier we did, just a moment, Divya, just a correction.
+
+(11:20) Earlier we did in the engineering account.
+
+(11:23) Okay.
+
+(11:24) In cluster and something on the shared empty cluster also.
+
+(11:28) But we are doing now everything on the Mars even account.
+
+(11:32) Sir, Rakesh, which account you have, in Mars there are couple of car IDs, right?
+
+(11:38) Yeah, so there is one, yeah.
+
+(11:40) So that is there.
+
+(11:41) I can just quick look and check it.
+
+(11:45) Yes.
+
+(11:45) Send us, send to this group.
+
+(11:48) I will send this to group.
+
+(11:49) What is the car ID you have used?
+
+(11:51) There are two car IDs.
+
+(11:53) And in two countries, there are instances.
+
+(11:56) That is first thing.
+
+(11:57) And even if you are doing that, the major dependency that I know and I understand is with Arun's team for opening up the ACLs and all, right?
+
+(12:12) And that is the time-taking task.
+
+(12:16) Does anybody know how much did we initiate that?
+
+(12:22) So there will be two parts of that ACL.
+
+(12:25) First part is for the metadata and second part is for the data zone.
+
+(12:31) So for metadata, there will be again two requests.
+
+(12:35) First for the like from AWS to that NSM portal and second one is the Illumio.
+
+(12:43) So for all databases, Illumio firewall is required.
+
+(12:48) So basically today we raised both the
+
+(12:51) request and we'll wait because the team has their own SLA but we will pass through at the time.
+
+(13:01) Okay, that was one thing and SageMaker was the other one, right?
+
+(13:08) So where are we in that?
+
+(13:10) One is the instance of AWS data zone and the dependencies were these two that we were talking about.
+
+(13:19) Yeah, for SageMaker, the first dependency is the role creation which I think we dotted today, created then in the next step, we will be waiting for the sunset certifications so that the required roles will be provisioned in order to create the data source searches.
+
+(13:43) Okay, so we have Sumit also, right?
+
+(13:46) Sumit, you can see
+
+(13:49) that we have got priority from Williams and their team, right?
+
+(13:56) So how are we gonna take up on the certification part, Sumit?
+
+(14:01) What is required from our end to push this?
+
+(14:05) So as someone, Somil said that requirement document, but I have not received any requirement document.
+
+(14:12) If he can share the requirement document in details and then I can talk to the trust team
+
+(14:18) to just create this for the certification, phase one certification and that Jira request, eCPM request for certification and prioritizing it based on these things because last meeting Karthik clearly called out that we need a detailed requirement document, what set of configuration we need to
+
+(14:41) or certify because data zone or SageMaker Studio, it's a big and complex things.
+
+(14:46) So we need to understand that which are the functionalities they need to enable, okay, and which corresponding role.
+
+(14:52) So if we get those details, then only we can ask the trust team in details that, hey, this, this to be enabled.
+
+(15:00) And the phase one certification, we will push them for prioritization.
+
+(15:06) Definitely, we need to call back the prioritization with the leadership alignment.
+
+(15:10) and then we can push it.
+
+(15:13) So just give us the... Just one minute.
+
+(15:18) I personally see this as a critical dependency based on certification because it's not started yet as I understand, correct?
+
+(15:27) Yeah.
+
+(15:28) Okay.
+
+(15:28) So it's entirely a new task I'm looking at and we have a, we probably need to set up
+
+(15:36) and I really want to clearly communicate with William that this is a new task, right?
+
+(15:41) Earlier we did not use the phase one certification as an approach, but we want to use now phase one certification and we have a dependency on all the approvals, right?
+
+(15:51) To make sure that the phase one certification is approved.
+
+(15:54) And when you say requirements, what exactly you are looking
+
+(15:58) That's particular configurations.
+
+(16:00) Particular configuration, we want this feature to be enabled, we want this feature to be enabled or what are the role corresponding to that which needs set of permissions and which like security rules or cloud.
+
+(16:15) More functional engineering requirements and I can help on that but without talking to you guys.
+
+(16:23) Can you give us a requirement document because as you mentioned that you have shared,
+
+(16:27) can you share me back yeah i will i will but but one thing i want to make sure because we i don't want to go back and forth again that requirement document is purely on the on the on the product and the business requirement right i i this that document will not have the configuration details you are looking for i i can i can work with you guys to create the configuration requirements right uh understanding the product in detail that can that can be done but
+
+(16:54) the document itself will not have what we are looking for.
+
+(16:56) That is functional.
+
+(16:57) That is engineering side.
+
+(16:59) Yeah, that's why that I want that which set of configuration we need to enable and which features need to be certified and for that which roles, I mean, yeah, definitely corresponding role will come.
+
+(17:13) So that one, let's say SageMaker Studio, it has n number of functionalities, 10 functionalities, but for this use case, you need five out of 10, okay?
+
+(17:21) So this,
+
+(17:22) in the phase one, they will enable those features.
+
+(17:25) So, Swamit, to be honest, it will be the same as what we have done so far and what we want to do in future, right?
+
+(17:33) So, like, as a next step.
+
+(17:36) Can you share someone from your team?
+
+(17:41) I can have a drill down with the Tris team and we can set up and we want to call out these are the functionalities we need to enable.
+
+(17:49) from SageMaker Studio side as well as the data zone side.
+
+(17:53) Okay.
+
+(17:54) And Sumit, I am expecting... Sumit, I am expecting that role will be taken by you because the product as a SME, you are...
+
+(18:06) I'm thinking last time you were introduced to us from the product side, right?
+
+(18:11) AWS product side, which is engineering layer zone, right?
+
+(18:16) Am I right in understanding?
+
+(18:18) See...
+
+(18:19) See, when you go for certification, that's why I'm telling you, when you go for certification, you need to understand that for this use case, let's say for glue, you need a, I'll just give you an example.
+
+(18:31) Glue, you need a, glue can connect with a 10 number, 10 data sources.
+
+(18:36) But for this use case, you need to connect with this particular use case, this particular data should flow from this particular source to this destination.
+
+(18:46) So they will enable those,
+
+(18:48) Sumit, what I'm asking is, if we give the requirements to you, who in this group will decide for 100 features, we just need 15?
+
+(19:02) Because we are from engineering side, from Krishna's engineering side, we can definitely collaborate along with Soumil and Alex, right?
+
+(19:14) We wanted somebody who can advise us
+
+(19:18) for our functional requirements, business requirements, these are the features.
+
+(19:24) Are you the guy or do we need to work with Arun's team on that?
+
+(19:29) Yeah, in that case, yeah, Divya.
+
+(19:32) One minute, sorry, Smith.
+
+(19:33) See, I totally agree.
+
+(19:35) I think solution should, team should take that role because we will be working with you guys in deciding what features or what solution we will be,
+
+(19:47) going ahead and implementing for the Agar Metadata Zone, right?
+
+(19:52) Spot on, Divya.
+
+(19:52) I think I agree.
+
+(19:53) Yeah.
+
+(19:53) It is Mukul and Rakesh from my team.
+
+(19:57) Yeah, just a point.
+
+(19:58) Yeah.
+
+(19:59) Sorry, Rakesh.
+
+(20:00) Yeah, go ahead.
+
+(20:00) No, no.
+
+(20:01) Yeah, Divya.
+
+(20:01) We're just doing the same thing.
+
+(20:02) Yes.
+
+(20:03) Thank you.
+
+(20:04) So, that's what I was about to say that from the beginning, Pradeep.
+
+(20:09) So, Saumil, Mukul and Rakesh, this is the first task that we're going to take away from this call.
+
+(20:15) We will sit with Saumil.
+
+(20:17) I don't know if Saumil has time today.
+
+(20:19) We will get this configuration document ready and share it with Sumit so he can take it forward with the, you know.
+
+(20:27) I am 100% available today.
+
+(20:30) This is high priority.
+
+(20:32) This is P0 task for us.
+
+(20:35) So Rakesh and Mukul, can you please work with Saumil?
+
+(20:40) Yeah, we'll work with Sumit.
+
+(20:42) Yes.
+
+(20:43) So P0 task is sorted.
+
+(20:44) This is fine.
+
+(20:45) Can you please make sure that Rohan and Rajiv on Pradeep's theme are also involved?
+
+(20:52) Because we have a couple people working with Sammil on this.
+
+(20:56) Okay.
+
+(20:57) Alex, we will decide about that, Alex.
+
+(20:59) I will talk to him about this Rajiv and Rohan's involvement.
+
+(21:03) But let's get back to the agenda, Divya.
+
+(21:07) I do need to have... Pradeep, one point I just want.
+
+(21:11) Yeah, Arun is aware of the priority, definitely.
+
+(21:15) But this CSAFE is not done by Arun's team.
+
+(21:19) It's a Nico Trion who is taking care of the cloud security and Tris and Chela.
+
+(21:25) So from your leadership, if you update Nico Trion, who is a VP for security,
+
+(21:34) chela chela is taking care of the ccf certification he's a director one minute i agree let's not go to that detail i i understand uh the security when you say priority because of these things to a parallel uh i mean leadership will be in sync then it will be easy to uh get it uh certified as it is possible yeah definitely fast task will be requirement uh functionality requirement uh
+
+(22:01) a documentation with the solution team.
+
+(22:03) And next, when I go with the prioritization, I need already a two-way communication with the engineering leadership as well as the CSF leadership, I mean, cloud security leadership.
+
+(22:16) Okay?
+
+(22:17) Yeah.
+
+(22:17) So when we raise the request, right, for certification, if it turns into some kind of blocker, right, we will prioritize it.
+
+(22:25) I'll make sure that GAR and engineering and cloud leadership are properly engaged.
+
+(22:29) That's fine.
+
+(22:30) But let's...
+
+(22:31) get it started, right, with the first step.
+
+(22:33) Yeah, I don't want to talk about the later things.
+
+(22:37) Yeah, we can plan it, definitely.
+
+(22:38) We can lay out all the tasks and see where we are, right, and what are the next step.
+
+(22:44) That is exactly what William wants to have a clear visibility, that what is happening, what is next step, and how the overall timeline look like.
+
+(22:50) And we will work on it today, so that is fine.
+
+(22:53) And at the high level, Pradeep, what I understand that there are different components and I agree it's complex, like it's AWS Blue, AWS SageMaker, AWS Data Zone, IAM Rose.
+
+(23:06) So there are a lot of things here which requires certification approvals and configuration.
+
+(23:11) So, I mean, this has been already discussed as a requirement previously when we talked
+
+(23:20) took another route for exception, right?
+
+(23:24) Now we are talking about phase one certification.
+
+(23:26) The requirements remain the same, but I'm happy to discuss it again all over.
+
+(23:30) That's fine if that helps.
+
+(23:32) Yeah, so we will move ahead.
+
+(23:35) So two tasks, we have got P0.
+
+(23:36) One task is dependent on the other.
+
+(23:39) So basically we'll be getting the configuration document and next Sumit will be working on the phase one certification.
+
+(23:46) So currently the completed tasks are on the new account,
+
+(23:50) We have created the roles.
+
+(23:53) It is on the Mars account.
+
+(23:54) We have created the roles.
+
+(23:55) That's the completed task.
+
+(23:57) We will be, from the solution standpoint, we will be raising the ACLs.
+
+(24:01) From my side, I will be expediting these ACLs to get implemented as early as possible.
+
+(24:08) I'll speak to the NETSEC team.
+
+(24:09) In case, Samuel, I need your intervention in expediting those requests from your directors or VPs, I'll just slack you for that.
+
+(24:17) In case, I'll push everything from my end and if
+
+(24:20) NETSEC team says, no, you're pushing, we need some time and kinds of thing, I'll reach out to you.
+
+(24:25) Can we move further on what next?
+
+(24:33) Yeah, so those ACS, I want to make sure everyone understand.
+
+(24:38) It's only for phase one.
+
+(24:40) I'm not talking about certification, but there are two phases we discussed earlier.
+
+(24:43) That phase one, we will focus on PostgreSQL TP connection, right?
+
+(24:47) That's the one we are talking about, Mukul?
+
+(24:49) Yeah.
+
+(24:50) Yes.
+
+(24:51) Okay.
+
+(24:52) Okay.
+
+(24:52) And then we have other data sources as well as part of pilot, which we will come to in phase two, right?
+
+(25:00) For connectivity only.
+
+(25:02) I just want to make sure everyone understand.
+
+(25:03) Okay.
+
+(25:04) Because we don't want to create...
+
+(25:05) all the connections and have a big chunk of scope and not showing any progress, right?
+
+(25:10) So let's start with ProSQL, SQL DB, but at the same time in phase two, there are other data sources as well for which we will require ACLs to be raised and connection needs to be established.
+
+(25:22) So just want to make sure.
+
+(25:23) Yeah.
+
+(25:25) Okay.
+
+(25:26) So we are clear up until now?
+
+(25:28) Everybody's on the same page?
+
+(25:30) Okay.
+
+(25:31) Moving ahead.
+
+(25:32) Moving ahead.
+
+(25:33) I think Sumit docked.
+
+(25:36) Where are we on the crawler creation, Mukul, for the new account?
+
+(25:42) Did we start?
+
+(25:43) Yeah, it's done.
+
+(25:45) It's done.
+
+(25:46) It's completed?
+
+(25:47) Wow, that's nice to hear.
+
+(25:50) I think the sheet update was just pending.
+
+(25:52) I think most of the work has been done.
+
+(25:54) Blue security groups.
+
+(25:56) What was the blocker last time we had?
+
+(25:57) Do you still stand on the blocker?
+
+(26:00) No, it's done.
+
+(26:04) This is also completed?
+
+(26:06) Yes.
+
+(26:07) So this is done on the MaaS account Mukul?
+
+(26:09) Yes, MaaS account, MaaS account, yeah.
+
+(26:12) So I think this table needs to be created for MaaS as well because most of the tasks we completed within two days for that MaaS account.
+
+(26:24) Yeah, I get it.
+
+(26:25) That's why we're updating, right?
+
+(26:26) What is the Clorid execution status?
+
+(26:31) So aggregation can only happen once the ACLs are in place.
+
+(26:35) Okay.
+
+(26:36) Dependency was point number six, right?
+
+(26:40) Yes.
+
+(26:41) Okay.
+
+(26:42) One second.
+
+(26:42) Hold on.
+
+(26:44) Okay.
+
+(26:45) So it sounds like with Mars account, the required configuration for the crawler is done.
+
+(26:52) But if we want to run the crawler and collect the metadata, ACL needs to be approved first, right?
+
+(26:58) Correct?
+
+(26:59) Yes.
+
+(27:00) Okay.
+
+(27:00) okay okay um so next creation of blue database and tables uh where are we on this yeah it's it's done so database have you already created table will be created automatically once the problem is this has to do anything with mars account or uh uh the acl uh so once okay so database we create uh uh from that uh
+
+(27:28) just to mention crawler to use that database.
+
+(27:32) Once the crawler runs, it will get the metadata and create the tables automatically in that database.
+
+(27:38) Got it.
+
+(27:38) But what I'm asking, this database, do we have, and again, it's maybe a dumb question, but do we have to associate this with the new Mars account?
+
+(27:47) Yes.
+
+(27:48) Okay.
+
+(27:49) Everything we are talking now is basically with the new Mars account.
+
+(27:53) Mars account.
+
+(27:54) Okay.
+
+(27:54) So this is done, I believe, right?
+
+(27:57) Yes.
+
+(27:57) The glue database and tables, like once the metadata is collected, it has to be stored somewhere in the target, right, which is the glue database and tables, which will be created automatically.
+
+(28:07) Database is set up, right?
+
+(28:09) It's already.
+
+(28:10) Yes.
+
+(28:10) Okay, good.
+
+(28:12) Okay, so it is in progress.
+
+(28:13) Half of it is done.
+
+(28:14) So point number eight, I know the numbers are wrong.
+
+(28:17) Bear with me.
+
+(28:19) But point number eight is dependent on law and execution for completion because the database is created.
+
+(28:24) However, the tables are not.
+
+(28:26) Going ahead.
+
+(28:27) Glue service enablement.
+
+(28:31) So Divya, before that, Mukul, when you create this databases and all right, from mouse account, do we need to open anything from our side?
+
+(28:46) I understand you are opening from ACL to connect the right.
+
+(28:51) Do we need to take care of anything from guard perspective?
+
+(28:55) other than getting the permissions to that particular account?
+
+(29:03) So I think what we needed, I think you already provided, that's credential, kind of three only credentials which will basically get the metadata from March 4th.
+
+(29:16) Okay.
+
+(29:17) Okay, let me rephrase the question to be very clear for everyone on the call.
+
+(29:22) So what Pradeep is asking,
+
+(29:23) that from the guard side, right?
+
+(29:26) When you collect the metadata from PostgreSQL DB for gel, right?
+
+(29:31) Do we need anything from us, right?
+
+(29:33) Do you guys need anything from us?
+
+(29:35) So like maybe the port needs to be opened or anything needs to be configured on the PostgreSQL DB side.
+
+(29:47) Because... To support that, right?
+
+(29:49) Mars account is in...
+
+(29:52) Mars, let's say Mars account, I will go ahead.
+
+(29:55) We use two things, right?
+
+(29:57) One is maybe it is in Hydra or maybe it is, I don't know where the application, that particular application is, right?
+
+(30:04) We use a couple of things.
+
+(30:06) And then the backend to that is we use Cassandra, we use Postgres, right?
+
+(30:12) From there, from our side also, do we need to open anything or are you guys still taking care of that?
+
+(30:21) That's the question.
+
+(30:23) I think Mukul understands.
+
+(30:24) Mukul, can you confirm?
+
+(30:28) I don't think anything is needed from your side.
+
+(30:34) And you are pointing to E1, right?
+
+(30:36) E1.
+
+(30:37) Okay, good.
+
+(30:46) Can I go ahead?
+
+(30:47) Yes, yes.
+
+(30:48) There are spelling mistakes.
+
+(30:50) I'll correct the sheets.
+
+(30:51) Bear with me.
+
+(30:52) Going ahead.
+
+(30:53) A validation of technical metadata.
+
+(30:55) Where are we on this, Mukul?
+
+(30:58) It will start only when technical metadata is available.
+
+(31:01) That is on us.
+
+(31:02) Once the metadata is available, we can validate whether whatever is in the source is successfully available in the target or not, right?
+
+(31:09) I'm just trying to simplify.
+
+(31:10) In the blue database or wherever we can access or through the data zone, we can see that, okay, we extracted X number of tables and X number of columns, whether that is successfully pulled over or not, right?
+
+(31:21) That is the...
+
+(31:24) I'm so sorry.
+
+(31:25) Yeah, go ahead, Saumil.
+
+(31:32) Saumil?
+
+(31:35) Sorry, was that for me?
+
+(31:36) Hello?
+
+(31:37) Yeah.
+
+(31:38) Whom we are talking?
+
+(31:39) Divya?
+
+(31:41) No, we were just discussing and Saumil was explaining.
+
+(31:44) That's it.
+
+(31:45) Okay.
+
+(31:45) Okay, okay.
+
+(31:47) Yeah.
+
+(31:47) Yeah, go ahead, please.
+
+(31:49) Yeah, I was dropped for a call.
+
+(31:51) That's ended anyway.
+
+(31:52) Okay.
+
+(31:53) So, Divya, that is, that task is still assigned to Gar, especially to me because I am leading, right, from the product side.
+
+(32:00) But it could be, you can add Pradeep and others as well.
+
+(32:06) Just Pradeep is enough.
+
+(32:08) Yeah.
+
+(32:09) Sorry, sorry, my bad, Pradeep.
+
+(32:11) Just Pradeep.
+
+(32:12) Yeah, so Pradeep and I will take care of it.
+
+(32:14) Yeah, I wanted to make sure.
+
+(32:16) No, no, no, I agree.
+
+(32:18) We will move ahead to the next task.
+
+(32:20) I get it.
+
+(32:21) This task is assigned to you and it is dependent on once the data is available, which is on 0.8 and 9, right?
+
+(32:28) Moving ahead.
+
+(32:29) SageMaker Unified Studio.
+
+(32:30) Where are we on the Mars account, Somal?
+
+(32:34) This is not started.
+
+(32:36) Not started.
+
+(32:37) This is not started.
+
+(32:40) Okay, so earlier it was done, but now for Mars account is not started.
+
+(32:43) Okay, good.
+
+(32:45) IAM roles, all these is not started, right?
+
+(32:49) Yes, anything with the data zone is not started.
+
+(32:52) Anything with the SageMaker, it is not started.
+
+(32:59) Yep.
+
+(33:00) Okay.
+
+(33:01) Okay, so the roles are associated to SageMaker, for my understanding.
+
+(33:07) Mukul.
+
+(33:09) No, I'm not.
+
+(33:11) No.
+
+(33:15) This is Karthik.
+
+(33:15) So I hope you're involved in the Parisian team.
+
+(33:18) SageMaker is like my service.
+
+(33:20) It has a layer to it, right?
+
+(33:22) Are you guys involving or like you're just enabling?
+
+(33:24) No, Kartik, these guys do not need any GenAI features of SageMaker.
+
+(33:30) We need only data zone or metadata related for SageMaker, right?
+
+(33:35) Only that feature will be enabling.
+
+(33:37) Kartik, this is SageMaker Studio.
+
+(33:40) This is not SageMaker GenAI capability.
+
+(33:44) Got it.
+
+(33:44) Thank you.
+
+(33:44) Yeah, it's mainly for domain enablement, right?
+
+(33:47) Because it creates the domain
+
+(33:50) It allows us to create the domain, right?
+
+(33:52) Otherwise, it won't happen.
+
+(33:54) Like the required domains within GAAR.
+
+(33:56) Yeah.
+
+(33:57) Okay.
+
+(33:57) It's just 2TO.
+
+(33:58) Yeah.
+
+(33:59) Yep.
+
+(33:59) Yeah.
+
+(33:59) Agree.
+
+(34:02) Okay.
+
+(34:03) So I think rest everything would be not started now.
+
+(34:08) Only not started and in progress ones.
+
+(34:11) ACL, I will be working with the team.
+
+(34:16) So I'll put my name.
+
+(34:18) Mukul, once you raise, let me know.
+
+(34:21) I will expedite it.
+
+(34:24) Okay.
+
+(34:25) I will share that details with you.
+
+(34:30) Max five to seven days, right?
+
+(34:33) Let me just take a calendar and put some data against it.
+
+(34:38) Sometime next week on this.
+
+(34:42) 24.
+
+(34:44) Everybody agree?
+
+(34:45) Yeah.
+
+(34:45) I'll try to do it before...
+
+(34:49) Let's put a week time frame.
+
+(34:54) Configuration.
+
+(34:55) See, I want this to be done as quickly as possible.
+
+(34:59) This would be Mukul and Rakesh.
+
+(35:01) I'll better put names rather than team.
+
+(35:06) Rakesh, when can you finish this?
+
+(35:08) What timeline you want to give for this, please?
+
+(35:12) We'll connect with Somil and then we have to understand.
+
+(35:15) Yeah, yeah, give the timeline.
+
+(35:18) That's fine.
+
+(35:18) So maybe today is Wednesday.
+
+(35:20) A couple of days maybe?
+
+(35:22) This is very important.
+
+(35:25) I will give 20 seconds, 6, Monday.
+
+(35:30) We'll move ahead.
+
+(35:32) So this is dependent on, okay.
+
+(35:36) This is all dependent on task 6.
+
+(35:38) SageMaker Unified Studio, who will be working?
+
+(35:41) Mukul, you're going to work with somebody, right?
+
+(35:44) When can this be done?
+
+(35:46) I think we don't have dependency on this.
+
+(35:51) We need to first get the roles right.
+
+(35:56) Okay, the beneath ones should be done first, right?
+
+(35:59) Yeah, I think so.
+
+(36:02) What timeline can you expect to finish this task?
+
+(36:08) Are we already aligned with Gaurav Singh, I mean, IAMT Marwani Gupta's team saying, you know, hey, this is coming in your way.
+
+(36:16) These are the roles you guys have to approve.
+
+(36:18) Is this kind of discussion completed with the team?
+
+(36:24) So that decision happened for that CLD account, the earlier ones.
+
+(36:29) And there we shared the exception rate for the same.
+
+(36:34) Yeah, but for March 1, we need to change.
+
+(36:37) okay shall i put a time frame of 20 24 6 which is next week is that okay uh yeah but uh just to just to be make sure uh it's dependent on the configuration it is dependent on them then i'll push this by another couple of days 26 6 is that okay we have next full week
+
+(37:06) are you okay with the timeline yeah okay so um so i don't know if alex is on the call i can't see is this okay up until now for report for you guys i'm here no this is good uh can you like uh
+
+(37:30) clean up a little bit because actual you put, right?
+
+(37:34) So in ETA, you can- Can you add me to this conference page, please?
+
+(37:40) I think you should be having- Or send me the link.
+
+(37:44) I don't have the link.
+
+(37:45) Can you share it in the chat somewhere?
+
+(37:48) Yeah.
+
+(37:48) I request one thing from everyone on the call.
+
+(37:52) Please use the MDM channel for communications.
+
+(37:57) That way we will have the history in one place.
+
+(37:59) If you're reaching out to any engineer of our team, you can put your message there because leaders are already part of that channel and things- Can you add me to that channel?
+
+(38:10) I don't think I'm on that channel.
+
+(38:12) Alex, can I do it post this call, please?
+
+(38:15) Sure, sure.
+
+(38:15) You don't have to do everything right now, though.
+
+(38:18) Yeah, yeah.
+
+(38:19) Got it.
+
+(38:21) So I think we are sorted for this call.
+
+(38:24) I will make, I know it is like rusty.
+
+(38:28) I will make this.
+
+(38:29) uh completely neat and clean i'll put it in an excel sheet so that alex can share with william if you have one quick question um because i already know what william is going to say when he sees this um the eta column uh a lot of them are blank so he's gonna say why are there no etas for anything if he says that what would i say if he says that for whichever are in progress and not started
+
+(38:57) I have seen to that I've put an ETA.
+
+(39:00) See, all these tasks are dependent on the previous ones, right?
+
+(39:03) This domain whitelisting, validate access, data zone project creation, all this is dependent on the IAM role set up.
+
+(39:13) I think with Divya, one question, I think she has a point.
+
+(39:16) What we have to do is that work backwards.
+
+(39:18) What we'll do is that, right, it's called date for date.
+
+(39:21) You are absolutely right, one is dependent on others, but for a leader to understand that it takes three months or four months, whatever we anticipate, right, put that end date, then say that as and when we complete one of the tasks, we will fast track as much as possible, so that, because with the openness, right, there's an ambiguity that are you going to finish, because open-ended stuff, it's very tough conversation.
+
+(39:44) Again, if you want help, I have already included Arish and Arun's team as well, right,
+
+(39:48) Let's sit together offline.
+
+(39:49) We'll put our point of view from infrastructure.
+
+(39:52) If it is dependent on Mr. Pradeep and probably like Samuel, right?
+
+(39:56) So then that's on like guard team, they can help us.
+
+(40:00) And just make sure that like that dependency column is also pretty important.
+
+(40:05) I totally agree with what Karthik just said, right?
+
+(40:08) Like if something is gonna take six months, it takes six months, but just note it down.
+
+(40:12) But then if William says, why is this taking six months?
+
+(40:15) you he can aim his fire at the at the dependency column right so dependencies are important because then me and my leadership can go chase after the dependencies to hopefully reduce the eta um but you know eta being blank and dependency i don't know and you know just make sure it's like clear right because when i talking to william or andrew or my leaders like i need to be very clear with what is done already what is going to get done you know the next
+
+(40:43) sprints, next month, whatever.
+
+(40:45) And then like a basic timeline.
+
+(40:48) Like it's okay if we don't have the entire thing planned out today.
+
+(40:51) We just need a general direction, general timelines, dependencies, blockers.
+
+(40:56) I did have a...
+
+(40:58) Understood, Alex.
+
+(40:59) That's a good feedback, Alex.
+
+(41:00) I think like internally, I'll work with GVR occasion for a few of the folks here.
+
+(41:03) between today and tomorrow, if possible, to bring that point of view.
+
+(41:07) Obviously, the first point of view, it will surprise you because, like, this is the first time we're enabling these services in AWS, and we have to go through some hoops with the information security teams.
+
+(41:17) But that is a good point that will provide opportunity for William to negotiate with the information security leaders and whoever he has to negotiate.
+
+(41:24) He has to know who to negotiate with.
+
+(41:26) He has to know who the blockers are.
+
+(41:27) Otherwise, he can't help you.
+
+(41:29) No, I agree.
+
+(41:30) And I think the good news is that, like, now...
+
+(41:33) This is the first time I'm getting involved in the last two weeks or so.
+
+(41:36) We will make sure that you will get a point of view shortly.
+
+(41:39) Divya, I think if you agree to it, we'll work offline to see what we can populate and provide that point of view.
+
+(41:45) I hope this is POC only.
+
+(41:46) Am I right?
+
+(41:48) That's correct.
+
+(41:50) Then there is no reason for us to run like this program.
+
+(41:52) I'm so sorry that I'm sounding like a new person coming into trying to dodge this thing, right?
+
+(41:57) POC should not be run as a project.
+
+(42:00) Well, we're doing a POC.
+
+(42:02) So the call, if you see the title of the call, says AWS and GCP.
+
+(42:06) So what we're doing, just to give you some color, is we're testing a couple things to see where we actually want to go.
+
+(42:14) AWS is obviously Williams number one, because that's the one we've been talking about the most.
+
+(42:20) Now they're talking about GCP.
+
+(42:21) It's fine to do GCP, but we have to separate the paths.
+
+(42:25) I do not want to cross streams.
+
+(42:27) I don't want to have a confluence page that are mixing GCP and AWS.
+
+(42:31) I manage GCP, Alex.
+
+(42:32) I manage GCP.
+
+(42:34) Tomorrow morning, you'll have every connection and whatnot.
+
+(42:37) I can give you tomorrow itself.
+
+(42:38) I was also holding my foot back because I know William's interest is on the AWS side.
+
+(42:43) My challenge is that this message is for my own team, Alex, not for your team, right?
+
+(42:48) If it is POC only, we'll bookmark an account, enable all these things.
+
+(42:52) I don't know how far this is running.
+
+(42:55) If I'm not wrong, Divya Parul said that
+
+(42:58) the requirements already there right what we can do if you agree to it like we'll work offline to see what best we can do i know this was put in back burner then again coming in the action so our goal is that to publish the timelines not extend this to months it should be less than few weeks max for all these things to happen and if you fear see a concern divya for rightful reason we'll bring the right partners of whoever it is internal or external perfect uh as as parul mentioned in previous corners right see all these tasks are easy to do with them
+
+(43:28) Most important one is the CESAR phase one certification.
+
+(43:31) That is not a problem.
+
+(43:32) That's why I'm saying that.
+
+(43:33) I will say that, like, no, see, again, why I'm coming here is that I'm the one who is pushing back on all these things.
+
+(43:38) POC, phase one certification, phase two certification, these are all process gimmicks that we have created for a rightful reason.
+
+(43:45) I agree with you.
+
+(43:46) We can either open an exception.
+
+(43:48) We can actually, like I said, that this is time-bound.
+
+(43:50) So there are a million ways to mitigate the risk as long as you bookmark and don't give wide-open access to a lot of people.
+
+(43:56) So I have some ideas, Divya.
+
+(43:57) while that is not your remit, it would be awesome.
+
+(44:00) For example, what Bharat and like Miriam told me at that point of time is that what it takes for William to make that happen in a short amount of time, because he's making a decision whether go left or right.
+
+(44:10) If the decision itself takes like six months, then there is no point of be providing the infrastructure, right?
+
+(44:15) So you have good feedback.
+
+(44:16) I agree with you.
+
+(44:18) I will take the full ownership of like now unblocking you from the CESA perspective, worst case scenario,
+
+(44:24) I mean, if info security does not agree to it, fine.
+
+(44:27) I think like now there is a low risk exception, Alex and team can open it up.
+
+(44:30) This is only for time bound until maybe a month or two when they certify.
+
+(44:34) So Alex, I'll try to close this out today and you will have like some answers by tomorrow, right?
+
+(44:40) But the one of the biggest- What type of update do you think realistically, and I appreciate, you know, that you guys are spinning this up.
+
+(44:48) Realistically today, like,
+
+(44:50) What up, and you know, I scheduled a meeting with Samuel and Pradeep just to meet with them in two hours, but what realistic update can we provide William today?
+
+(45:03) And I can tell him, you know, we're working, we're coordinating, we'll give more, a better, more cohesive update next week.
+
+(45:11) Like we can just say next week, I don't have to rush it, another update tomorrow.
+
+(45:15) Not a problem.
+
+(45:15) What updates can I get today?
+
+(45:18) Yep.
+
+(45:19) Divya, let me ask you three questions that will give you an answer.
+
+(45:23) Do you have an account like Pradeep, Swaminarayan team?
+
+(45:26) Yes.
+
+(45:27) Do they have access to load data in the data zone or no?
+
+(45:32) Data zone, we are yet to provision.
+
+(45:34) So there are a couple of ACLs which we have to, you know,
+
+(45:38) NETSEC has to execute on these accounts for the glue to work.
+
+(45:44) So NETSEC, I am pushing it from my end Karthik.
+
+(45:46) So that's what I said, right?
+
+(45:47) And we need at least three days for that.
+
+(45:50) So that's where we stand.
+
+(45:52) That's the next question, Karthik.
+
+(45:55) Then the next question I have is that, right?
+
+(45:57) Have you categorically put the list of like, again, they're doing a POC, right?
+
+(46:01) They might like, the first systematic thing is that we have to load data.
+
+(46:05) Then let them process whatever they want an outcome, right?
+
+(46:08) Let's compartmentalize as three things.
+
+(46:10) In your vantage point, like, you know, the one lead service, which I'm seeing that, like, the SageMaker and Data Zone, this phase one, phase two certification, right?
+
+(46:17) That is on us.
+
+(46:17) We will figure it out.
+
+(46:18) I don't want, like, to bring in worst case scenario if Mr. William and Alex and team have to open an exception.
+
+(46:24) That's not a problem.
+
+(46:25) Our goal is that infrastructure readiness should be planned for on or before mid next week, if possible.
+
+(46:30) So the update, what we need to let Mr. Alex know is that account has been provisioned.
+
+(46:35) 50% of the services have been enabled by, will be enabled by end of this week.
+
+(46:39) And maybe another, like a few of the services will be enabled next week.
+
+(46:42) So we have to work on a time bond.
+
+(46:44) I know like it's pressure for all of us, Divya, but since it's a high profile initiative for decision-making, we need to fast track certain things.
+
+(46:51) I'm willing to help and I'll bring in Arun as needed.
+
+(46:55) From my perspective, even if you are available after this call, I want to refresh this whole table with the clear task completed, in progress, not started, dependencies and timeline.
+
+(47:13) That is what I'm looking for.
+
+(47:14) to communicate to William that where we are today.
+
+(47:18) Because if I have that information, Alex and I will be able to summarize.
+
+(47:22) If I don't, I don't want to miscommunicate anything to William.
+
+(47:26) Sure.
+
+(47:27) Can we connect 9.30 my time?
+
+(47:30) Next half an hour I have a call.
+
+(47:32) After that I'm available.
+
+(47:33) 9.30 my time, I don't know.
+
+(47:35) Okay, I'll schedule.
+
+(47:38) Pradeep can join.
+
+(47:39) I will literally cancel any meeting that I have.
+
+(47:43) please just invite me.
+
+(47:46) I want to get in front of William today.
+
+(47:49) Please don't ask me if I have availability.
+
+(47:52) Just mark a time that you're available and I will join.
+
+(47:55) Thanks, Alex.
+
+(47:57) Thanks for being flexible.
+
+(47:59) I'll set up a call in the next 30 minutes, Divya.
+
+(48:02) I think you have dates at least, right?
+
+(48:05) If not, I'll request some cool
+
+(48:08) And who has... Rakesh.
+
+(48:11) Rakesh, yeah.
+
+(48:11) If you can, you know, if you can join the cause, that would be perfect.
+
+(48:15) If not, if Divya can, you know, request that information quickly and if you can fill in that date... And see to that one...
+
+(48:23) One of my guys join in, Mukul and Rakesh, they join in.
+
+(48:26) Even before that, this half an hour they'll be having, right?
+
+(48:29) It's me who has a call now.
+
+(48:31) I have to go back for an M&A call.
+
+(48:34) So they will update whatever is there in their end on this table.
+
+(48:40) And we can discuss at 9.30 my time, 9.30 IST.
+
+(48:45) Yeah, but we have some basic information now, right?
+
+(48:49) Yeah, yeah.
+
+(48:50) And dates and all, and the task, what is completed, what is not completed, what is in progress, what dependency we have, etc.
+
+(48:57) So, we can just clean up this, right?
+
+(48:59) So, we have most up-to-date with the Mars account and Phase 1 certifications.
+
+(49:04) Yeah, sure.
+
+(49:04) One more thing I wanted to ask Karthik.
+
+(49:07) I think, Karthik, because they wanted to run the GCP and AWS one parallely, though they
+
+(49:13) are ahead with aws when can we kick start tomorrow morning you'll have everything all i ask the question is that like a documentation i need the car id that's all i need and the services tomorrow morning you will have an account with all the things no no network security play nothing because i like i told you it's a poc environment so um i think like no so let me do this one
+
+(49:35) I'm hearing Alex that he is not super focused on GCP side of things.
+
+(49:39) So GCP, consider that that will be done by end of this week.
+
+(49:42) Whatever Alex needs, everything will be completed by end of this week.
+
+(49:45) I don't need anyone's help.
+
+(49:47) I will just put it.
+
+(49:48) Why I'm saying is that like, no, I don't want a meeting to come over.
+
+(49:52) Where I'm a little confused and concerned is that what is needed in AWS, I'm still wrapping my head.
+
+(49:56) I need Harish and like, no, probably Rakesh.
+
+(49:58) If you know answers, like, no, let's talk offline.
+
+(50:00) I want to go in front of William with a strong opinion that what I have to provide, what he has to help me from infosecurity standpoint of you.
+
+(50:07) It has to be crystal clear.
+
+(50:09) Again, this is all band 16 about discussions.
+
+(50:11) I don't want to go and do this 20 different tactical items.
+
+(50:15) This is not a project that I'm proud about it.
+
+(50:18) By now, the account should be given and customer should be doing a thing.
+
+(50:22) And I think Alex has a point and feedback, which I feel that we can do better from infosecurity and our platform services, whatever we can.
+
+(50:30) Yeah.
+
+(50:32) Okay.
+
+(50:34) Okay.
+
+(50:35) Okay.
+
+(50:36) One second is the GCP.
+
+(50:38) I'm giving your account, but I'm not expecting you to do testing.
+
+(50:40) So you can even save that as a win that I think like, you will have everything ready in GCP if you want to do POC starting Monday.
+
+(50:48) Next Monday.
+
+(50:49) Thank you.
+
+(50:50) These guys have asked for a, because they haven't seen how the knowledge base or the data flex looks like, right?
+
+(50:57) Can we have a session?
+
+(50:59) It is what they asked last time.
+
+(51:02) Yes.
+
+(51:03) Unfortunately, the product manager for Google is out of office until like next Wednesday.
+
+(51:07) I'll figure it out.
+
+(51:08) But before that, I don't want to wait.
+
+(51:10) I'll have an account with all the access.
+
+(51:13) Karthik, if it has to be next Wednesday, it's fine because I'm out of the office starting tomorrow until next Monday.
+
+(51:20) I think what we just wanted, correct me if I'm wrong, Samil, you also mentioned in the chat with Lakshmi and William was we wanted to see a demo, right?
+
+(51:28) Like,
+
+(51:29) To your point, that like go, no go, like left, right decision that you said, Karthik, or someone else said that.
+
+(51:37) You said that, yeah.
+
+(51:38) So if you think about the left, going left is AWS and going right is GCP, we have to present William a decision of left or right, right?
+
+(51:47) So we have to have visibility in both decisions, both for him to make a decision.
+
+(51:54) So a POC...
+
+(51:56) It's basically you want to make it as time-bounded as possible so he can make a decision as quickly as possible because it shouldn't take you months to see which is better for our use case, AWS or GCP.
+
+(52:07) I am not making an assessment which is better, cloud solution.
+
+(52:11) All I'm saying is for our use case, which solution is better, not both one or the other.
+
+(52:17) Understood.
+
+(52:17) I think that is loud and clear, Alex.
+
+(52:19) What I'll do is that what- Shouldn't take this long to figure it out.
+
+(52:22) I mean, I think the optics look pretty bad if I had to get, I mean, I'm just being honest.
+
+(52:28) Again, why I'm telling this in front of this very close community is that this is not just you.
+
+(52:33) Every single brand new service, if a service is not certified by InfoSecurity, it takes months for us to go to a level.
+
+(52:40) The team on the ground, Vivian team, poor guys, they're trying to like, you know, work with InfoSecurity, but obviously my-
+
+(52:46) contribution to this community is that don't go alone go with like no the point of view of what where are you stuck what can because remember there are a million priorities right i have literally 67 initiatives in parallel we are executing and everything needs something different there is not a standard cookie cutter like the house i can ship right so that is where i think the challenge is alex which i'm empathetically looking from this point of view and rakish point of view but i am not eating anything
+
+(53:12) Let's take the risk.
+
+(53:13) This is not something like, as long as you're not bringing customer data, doing some really, really high-risk items in the POC.
+
+(53:20) I'm not using it.
+
+(53:21) I'm not using it.
+
+(53:22) This is E1.
+
+(53:24) I mean, Sam, I'll correct you if I'm wrong.
+
+(53:27) This is E1 metadata.
+
+(53:28) We're not talking about any type of even transaction-level data.
+
+(53:32) We're talking about metadata.
+
+(53:33) That's right.
+
+(53:34) It's only metadata, no data.
+
+(53:36) we're not sending credit card numbers out the window with no visibility that's not what we're doing here thank you so much again you believe i believe but the info security will not believe worst case scenario no i i understand i've worked on i i did this at bank of america with transmission governance okay i understand how i understand how that works believe me i understand that process and i understand why it takes so long because
+
+(54:02) If things escape, we're going to get fines and we're going to shut down.
+
+(54:07) So I understand why InfoSecurity is going to say, leave us alone.
+
+(54:12) But there are certain things that don't require the highest scrutiny of InfoSecurity because we're not sending PII information to AWS or GCP.
+
+(54:26) There's different levels of scrutiny, and I'm confused why InfoSecurity is treating this like it's the biggest, like it's the full final program.
+
+(54:34) I'm confused.
+
+(54:37) Alex, they are not.
+
+(54:40) They have been supportive.
+
+(54:41) Let's not assume things.
+
+(54:43) I mean, but they also have their protocols and processes they have to follow, right?
+
+(54:48) But in my experience, they have supported...
+
+(54:51) whatever they could and expedited based on our request.
+
+(54:54) So I don't think that's the biggest concern.
+
+(54:57) But for GCP, Karthik, I would appreciate once you enable, let's have a demo first.
+
+(55:03) I want to look at the product.
+
+(55:06) GCP, don't worry, Swami.
+
+(55:07) You will not run into it.
+
+(55:08) Why?
+
+(55:08) Because this is not the first POC.
+
+(55:10) This is the 20th POC I'm doing.
+
+(55:11) So I'm not worried about it.
+
+(55:13) We have to also explain it.
+
+(55:17) Data was always GCP.
+
+(55:19) Never ever we have done data.
+
+(55:21) That is a completely strategical change from going from A to B, right?
+
+(55:25) I'm not complaining about info security.
+
+(55:27) They are getting now confused that, hey, I thought data use cases are going to GCP.
+
+(55:31) Why are we enabling data warehouse use case in AWS?
+
+(55:34) They need to like double check, triple check.
+
+(55:36) That is what I'm trying to say that like, no, we can explain by finding a simple LORIS exception.
+
+(55:41) If it goes in a direction where it is delayed,
+
+(55:44) My recommendation is that that's what we have done for Project Nova, Center, all these initiatives, right?
+
+(55:50) Yes, Karthik, they had that question and we clarified and they are aligned on that, that it's all metadata.
+
+(55:56) I don't think they have confusion now.
+
+(55:58) They had this confusion before about the data risk, right?
+
+(56:01) But this is not about data.
+
+(56:02) This is only metadata.
+
+(56:03) So they understand it now.
+
+(56:04) That confusion even they had, yeah.
+
+(56:08) So, and then I think like Divya, then if that's the case, then let me know the list of services, where you need help.
+
+(56:13) And based on that, like, you know, can we put a small date for date plan tomorrow, Divya?
+
+(56:17) Working with Harish or like, you know, Arun.
+
+(56:20) I don't want to go and like, you know, bypass Arun because it is going at the top of the house.
+
+(56:25) I want to make sure he's comfortable.
+
+(56:28) Yeah, sure, sure, Kartik.
+
+(56:29) Tomorrow I'll schedule a call with these guys.
+
+(56:33) Divya, I'll send it by.
+
+(56:34) after 30 minutes to go through this.
+
+(56:37) I think I have to drop now because I have to...
+
+(56:41) Thank you so much.
+
+(56:45) Thank you.
+
+(56:46) You really steered this meeting in the right direction.
+
+(56:48) Thank you.
+
+(56:49) Thank you, guys.
+
+(56:50) Thank you, Rakesh.
+
+(56:53) Thank you.
+
+(56:53) Thank you.
+
+(57:04) Bye.
+
+(57:08) Thank you.
